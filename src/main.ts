@@ -1,11 +1,20 @@
 import { Camera, renderPixel } from "./camera";
+import { LambertianMaterial, MetalMaterial } from "./material";
 import { HittableList, Sphere } from "./object";
 import { linearToSRGB } from "./utils";
 import { Color, Vector3 } from "./vec3";
 
 const world = new HittableList();
-world.add(new Sphere(new Vector3(0, 0, -1), 0.5));
-world.add(new Sphere(new Vector3(0, -100.5, -1), 100));
+
+const mat_ground = new LambertianMaterial(new Color(0.8, 0.8, 0));
+const mat_center = new LambertianMaterial(new Color(0.1, 0.2, 0.5));
+const mat_left = new MetalMaterial(new Color(0.8, 0.8, 0.8));
+const mat_right = new MetalMaterial(new Color(0.8, 0.6, 0.2));
+
+world.add(new Sphere(new Vector3(0, -100.5, -1), 100, mat_ground));
+world.add(new Sphere(new Vector3(0, 0, -1.2), 0.5, mat_center));
+world.add(new Sphere(new Vector3(-1, 0, -1), 0.5, mat_left));
+world.add(new Sphere(new Vector3(1, 0, -1), 0.5, mat_right));
 
 
 const camera = new Camera({

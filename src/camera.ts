@@ -51,17 +51,16 @@ export class Camera {
 const c1 = new Color(1, 1, 1);
 const c2 = new Color(0.5, 0.7, 1);
 
-function ray_color(ray: Ray, depth: number, world: HittableList, reflectance: number): Color {
+function rayColor(ray: Ray, depth: number, world: HittableList): Color {
     if (depth <= 0) return new Color(0, 0, 0);
     const hit_record = world.hit(ray, new Interval(0.001, Infinity));
     if (hit_record) {
-        const diffuse_dir = new Vector3().randomDirection().add(hit_record.normal);
-        return ray_color(
-            new Ray(hit_record.p, diffuse_dir),
-            depth - 1,
-            world,
-            reflectance
-        ).multiplyScalar(reflectance);
+        const scattered = hit_record.mat.scatter(ray, hit_record);
+        if (scattered) {
+            return rayColor(scattered.ray_scatter, depth - 1, world)
+                .multiply(scattered.attenuation);
+        }
+        return new Color(0, 0, 0);
     }
     const a = 0.5 * (ray.norm_dir.y + 1.0);
     return new Color().lerpVectors(c1, c2, a);
@@ -69,7 +68,7 @@ function ray_color(ray: Ray, depth: number, world: HittableList, reflectance: nu
 
 
 export function renderPixel(camera: Camera, scene: HittableList, pixel_x: number, pixel_y: number) {
-    const { image_width, max_depth, pixel00_loc, pixel_delta_u, pixel_delta_v, center, samples_per_pixel } = camera;
+    const { max_depth, pixel00_loc, pixel_delta_u, pixel_delta_v, center, samples_per_pixel } = camera;
     const total_color = new Color(0, 0, 0);
     for (let i = 0; i < samples_per_pixel; i++) {
         const offset_x = Math.random() - 0.5;
@@ -78,11 +77,10 @@ export function renderPixel(camera: Camera, scene: HittableList, pixel_x: number
             .addScaledVector(pixel_delta_u, pixel_x + offset_x)
             .addScaledVector(pixel_delta_v, pixel_y + offset_y);
         const ray_dir = pixel_sample.sub(center);
-        const sample_color = ray_color(
+        const sample_color = rayColor(
             new Ray(center, ray_dir),
             max_depth,
-            scene,
-            ((pixel_x / image_width * 10) >> 0) / 10
+            scene
         );
         total_color.add(sample_color);
     }

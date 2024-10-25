@@ -1,3 +1,4 @@
+import { Material } from "./material";
 import { Ray } from "./ray";
 import { Interval } from "./utils";
 import { Vector3 } from "./vec3";
@@ -7,7 +8,7 @@ export class HitRecord {
     normal: Vector3;
     t: number;
     front_face: boolean;
-
+    mat: Material;
     set_face_normal(ray: Ray, outward_normal: Vector3) {
         this.front_face = ray.dir.dot(outward_normal) < 0;
         this.normal = this.front_face ? outward_normal : outward_normal.clone().multiplyScalar(-1);
@@ -39,7 +40,7 @@ export class HittableList implements Hittable {
 }
 
 export class Sphere implements Hittable {
-    constructor(public center: Vector3, public radius: number) { };
+    constructor(public center: Vector3, public radius: number, public material: Material) { };
     hit(ray: Ray, ray_t: Interval) {
         const oc = this.center.clone().sub(ray.origin);
         const a = ray.dir.lengthSquared();
@@ -59,6 +60,7 @@ export class Sphere implements Hittable {
         const rec = new HitRecord();
         rec.t = root;
         rec.p = ray.at(rec.t);
+        rec.mat = this.material;
         const outward_normal = rec.p.clone().sub(this.center).divideScalar(this.radius);
         rec.set_face_normal(ray, outward_normal);
         return rec;

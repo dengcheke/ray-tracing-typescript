@@ -1,3 +1,5 @@
+import { Vector3 } from "./vec3";
+
 export function lerp(min: number, max: number, t: number) {
     return (max - min) * t + min;
 }
@@ -8,8 +10,20 @@ export function random(min?: number, max?: number) {
         return lerp(min, max, Math.random());
     }
 }
+const epsilon = 1e-6;
+export function is_near_zero(v: Vector3) {
+    return [...v].every(comp => Math.abs(comp) < epsilon);
+}
 
-export function degToRad(d: number) {
+export function reflect(v: Vector3, n: Vector3) {
+    return v.clone().addScaledVector(n, -2 * v.dot(n));
+}
+
+
+
+
+
+export function deg_to_rad(d: number) {
     return d / 180 * Math.PI;
 }
 
