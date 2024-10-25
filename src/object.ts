@@ -1,4 +1,5 @@
 import { Ray } from "./ray";
+import { Interval } from "./utils";
 import { Vector3 } from "./vec3";
 
 export class HitRecord {
@@ -14,11 +15,7 @@ export class HitRecord {
 }
 
 export interface Hittable {
-    hit(
-        ray: Ray,
-        ray_tmin: number,
-        ray_tmax: number
-    ): false | HitRecord;
+    hit(ray: Ray, ray_t: Interval): false | HitRecord;
 }
 
 export class HittableList implements Hittable {
@@ -27,11 +24,11 @@ export class HittableList implements Hittable {
         this.objects.push(obj);
         return this;
     }
-    hit(ray: Ray, ray_tmin: number, ray_tmax: number): false | HitRecord {
+    hit(ray: Ray, ray_t: Interval): false | HitRecord {
         let hit_result = false as false | HitRecord;
-        let closest_so_far = ray_tmax;
+        let closest_so_far = ray_t.max;
         for (let obj of this.objects) {
-            const hit = obj.hit(ray, ray_tmin, closest_so_far);
+            const hit = obj.hit(ray, new Interval(ray_t.min, closest_so_far));
             if (hit) {
                 closest_so_far = hit.t;
                 hit_result = hit;
@@ -43,7 +40,7 @@ export class HittableList implements Hittable {
 
 export class Sphere implements Hittable {
     constructor(public center: Vector3, public radius: number) { };
-    hit(ray: Ray, ray_tmin: number, ray_tmax: number) {
+    hit(ray: Ray, ray_t: Interval) {
         const oc = this.center.clone().sub(ray.origin);
         const a = ray.dir.lengthSquared();
         const h = ray.dir.dot(oc);
@@ -53,9 +50,9 @@ export class Sphere implements Hittable {
 
         const sqrtd = discriminant ** 0.5;
         let root = (h - sqrtd) / a;
-        if (root <= ray_tmin || root >= ray_tmax) {
+        if (!ray_t.surrounds(root)) {
             root = (h + sqrtd) / a;
-            if (root <= ray_tmin || root >= ray_tmax) {
+            if (!ray_t.surrounds(root)) {
                 return false;
             }
         }

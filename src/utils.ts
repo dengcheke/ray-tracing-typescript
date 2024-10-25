@@ -12,3 +12,20 @@ export function random(min?: number, max?: number) {
 export function degToRad(d: number) {
     return d / 180 * Math.PI;
 }
+
+
+export class Interval {
+    static Empty = new Interval(Infinity, -Infinity);
+    static Universe = new Interval(-Infinity, Infinity);
+    constructor(public min: number, public max: number) { };
+    size() {
+        return this.max - this.min;
+    }
+    contains(x: number) {
+        return x >= this.min && x <= this.max;
+    }
+    surrounds(x: number) {
+        return x > this.min && x < this.max;
+    }
+
+}

@@ -1,5 +1,6 @@
 import { HittableList, Sphere } from "./object";
 import { Ray } from "./ray";
+import { Interval } from "./utils";
 import { Color, Vector3 } from "./vec3";
 
 const aspect_radio = 16 / 9;
@@ -59,7 +60,7 @@ ctx.putImageData(imagedata, 0, 0);
 
 
 function ray_color(ray: Ray, world: HittableList) {
-    const hit_record = world.hit(ray, 0, Infinity);
+    const hit_record = world.hit(ray, new Interval(0, Infinity));
     if (hit_record) {
         return new Color(...hit_record.normal).addScalar(1).multiplyScalar(0.5);
     }
