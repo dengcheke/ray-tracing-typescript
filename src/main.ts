@@ -1,5 +1,5 @@
 import { Camera, renderPixel } from "./camera";
-import { LambertianMaterial, MetalMaterial } from "./material";
+import { DielectricMaterial, LambertianMaterial, MetalMaterial } from "./material";
 import { HittableList, Sphere } from "./object";
 import { linearToSRGB } from "./utils";
 import { Color, Vector3 } from "./vec3";
@@ -8,7 +8,7 @@ const world = new HittableList();
 
 const mat_ground = new LambertianMaterial(new Color(0.8, 0.8, 0));
 const mat_center = new LambertianMaterial(new Color(0.1, 0.2, 0.5));
-const mat_left = new MetalMaterial(new Color(0.8, 0.8, 0.8), 0.3);
+const mat_left = new DielectricMaterial(1 / 1.33);
 const mat_right = new MetalMaterial(new Color(0.8, 0.6, 0.2), 1.0);
 
 world.add(new Sphere(new Vector3(0, -100.5, -1), 100, mat_ground));

@@ -1,6 +1,6 @@
 import { HitRecord } from "./object"
 import { Ray } from "./ray"
-import { is_near_zero, reflect } from "./utils";
+import { is_near_zero, reflect, refract } from "./utils";
 import { Color, Vector3 } from "./vec3";
 
 export interface Material {
@@ -34,10 +34,31 @@ export class MetalMaterial implements Material {
         const reflect_dir = reflect(ray_in.dir, hit_record.normal);
         reflect_dir.normalize()
             .addScaledVector(new Vector3().randomDirection(), this.fuzz);
-        if(reflect_dir.dot(hit_record.normal) <= 0) return false;
+        if (reflect_dir.dot(hit_record.normal) <= 0) return false;
         return {
             ray_scatter: new Ray(hit_record.p, reflect_dir),
             attenuation: this.albedo
+        }
+    }
+}
+
+
+export class DielectricMaterial implements Material {
+    static Attenuation = new Color(1, 1, 1);
+    constructor(public refract_index: number) { }
+    scatter(ray_in: Ray, hit_record: HitRecord) {
+        const ri = hit_record.front_face ? (1 / this.refract_index) : this.refract_index;
+        const cos_theta = Math.min(-ray_in.norm_dir.dot(hit_record.normal), 1);
+        const sin_theta = Math.sqrt(1 - cos_theta * cos_theta);
+
+        const cannot_refract = sin_theta * ri > 1;
+
+        const refract_dir = cannot_refract
+            ? reflect(ray_in.norm_dir, hit_record.normal)
+            : refract(ray_in.norm_dir, hit_record.normal, ri);
+        return {
+            ray_scatter: new Ray(hit_record.p, refract_dir),
+            attenuation: DielectricMaterial.Attenuation
         }
     }
 }

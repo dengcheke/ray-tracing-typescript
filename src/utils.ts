@@ -19,7 +19,12 @@ export function reflect(v: Vector3, n: Vector3) {
     return v.clone().addScaledVector(n, -2 * v.dot(n));
 }
 
-
+export function refract(v: Vector3, n: Vector3, etai_over_etat: number) {
+    const cos_theta = Math.min(-v.dot(n), 1);
+    const r_perp = v.clone().addScaledVector(n, cos_theta).multiplyScalar(etai_over_etat);
+    const s = -Math.sqrt(1.0 - r_perp.lengthSquared());
+    return r_perp.addScaledVector(n, s);
+}
 
 
 
