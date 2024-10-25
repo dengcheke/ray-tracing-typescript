@@ -59,12 +59,17 @@ function hit_shpere(center: Vector3, radius: number, ray: Ray) {
     const b = ray.dir.dot(oc) * -2;
     const c = oc.dot(oc) - radius * radius;
     const discriminant = b * b - 4 * a * c;
-    return discriminant >= 0;
+    if (discriminant < 0) {
+        return -1;
+    }
+    return (-b - discriminant ** 0.5) / (2 ** a);
 }
 
 function ray_color(ray: Ray) {
-    if (hit_shpere(sphere_center, 0.5, ray)) {
-        return Color.Red;
+    const t = hit_shpere(sphere_center, 0.5, ray)
+    if (t > 0) {
+        const n = ray.at(t).sub(sphere_center).normalize();
+        return new Color(...n).addScalar(1).multiplyScalar(0.5);
     }
     const a = 0.5 * (ray.norm_dir.y + 1.0);
     return new Color().lerpVectors(c1, c2, a);

@@ -13,12 +13,9 @@ export class Ray {
         this.norm_dir = direction.clone().normalize();
     }
 
-    at(t: number, normal = true) {
+    at(t: number) {
         return this.origin
             .clone()
-            .addScaledVector(
-                normal ? this.norm_dir : this.dir,
-                t
-            );
+            .addScaledVector(this.dir, t);
     }
 }
