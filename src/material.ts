@@ -29,9 +29,12 @@ export class LambertianMaterial implements Material {
 }
 
 export class MetalMaterial implements Material {
-    constructor(public albedo: Color) { }
+    constructor(public albedo: Color, public fuzz: number) { }
     scatter(ray_in: Ray, hit_record: HitRecord) {
         const reflect_dir = reflect(ray_in.dir, hit_record.normal);
+        reflect_dir.normalize()
+            .addScaledVector(new Vector3().randomDirection(), this.fuzz);
+        if(reflect_dir.dot(hit_record.normal) <= 0) return false;
         return {
             ray_scatter: new Ray(hit_record.p, reflect_dir),
             attenuation: this.albedo
