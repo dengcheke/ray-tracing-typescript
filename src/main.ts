@@ -1,3 +1,4 @@
+import { HittableList, Sphere } from "./object";
 import { Ray } from "./ray";
 import { Color, Vector3 } from "./vec3";
 
@@ -34,7 +35,9 @@ const arraybuffer = imagedata.data;
 
 const c1 = new Color(1, 1, 1);
 const c2 = new Color(0.5, 0.7, 1);
-const sphere_center = new Vector3(0, 0, -1);
+const world = new HittableList();
+world.add(new Sphere(new Vector3(0, 0, -1), 0.5));
+world.add(new Sphere(new Vector3(0, -100.5, -1), 100));
 for (let j = 0; j < image_height; j++) {
     for (let i = 0; i < image_width; i++) {
         const pixel_center = pixel00_loc.clone()
@@ -42,7 +45,7 @@ for (let j = 0; j < image_height; j++) {
             .addScaledVector(pixel_delta_v, j);
         const ray_dir = pixel_center.clone().sub(camera_center);
         const ray = new Ray(camera_center, ray_dir);
-        const pixel_color = ray_color(ray);
+        const pixel_color = ray_color(ray, world);
         const index = (j * image_width + i) * 4;
         arraybuffer[index] = pixel_color.r * 255 >> 0;
         arraybuffer[index + 1] = pixel_color.g * 255 >> 0;
@@ -53,23 +56,12 @@ for (let j = 0; j < image_height; j++) {
 ctx.putImageData(imagedata, 0, 0);
 
 
-function hit_shpere(center: Vector3, radius: number, ray: Ray) {
-    const oc = center.clone().sub(ray.origin);
-    const a = ray.dir.dot(ray.dir);
-    const b = ray.dir.dot(oc) * -2;
-    const c = oc.dot(oc) - radius * radius;
-    const discriminant = b * b - 4 * a * c;
-    if (discriminant < 0) {
-        return -1;
-    }
-    return (-b - discriminant ** 0.5) / (2 ** a);
-}
 
-function ray_color(ray: Ray) {
-    const t = hit_shpere(sphere_center, 0.5, ray)
-    if (t > 0) {
-        const n = ray.at(t).sub(sphere_center).normalize();
-        return new Color(...n).addScalar(1).multiplyScalar(0.5);
+
+function ray_color(ray: Ray, world: HittableList) {
+    const hit_record = world.hit(ray, 0, Infinity);
+    if (hit_record) {
+        return new Color(...hit_record.normal).addScalar(1).multiplyScalar(0.5);
     }
     const a = 0.5 * (ray.norm_dir.y + 1.0);
     return new Color().lerpVectors(c1, c2, a);

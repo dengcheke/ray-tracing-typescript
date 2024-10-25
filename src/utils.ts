@@ -8,3 +8,7 @@ export function random(min?: number, max?: number) {
         return lerp(min, max, Math.random());
     }
 }
+
+export function degToRad(d: number) {
+    return d / 180 * Math.PI;
+}
