@@ -26,6 +26,12 @@ export function refract(v: Vector3, n: Vector3, etai_over_etat: number) {
     return r_perp.addScaledVector(n, s);
 }
 
+//Schlick Approximation
+export function reflectance(cos: number, refraction_index: number) {
+    let r0 = (1 - refraction_index) / (1 + refraction_index);
+    r0 = r0 * r0;
+    return r0 + (1 - r0) * Math.pow(1 - cos, 5);
+}
 
 
 export function deg_to_rad(d: number) {
