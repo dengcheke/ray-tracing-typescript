@@ -11,7 +11,8 @@ const camera = new Camera({
     aspect_ratio: 16 / 9,
     image_width: 400,
     center: new Vector3(0, 0, 0),
-    focal_length: 1
+    focal_length: 1,
+    samples_per_pixel: 10,
 });
 
 const { image_height, image_width } = camera;

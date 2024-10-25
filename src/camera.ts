@@ -9,20 +9,26 @@ export class Camera {
     image_width: number;
     image_height: number;
     center: Vector3;
+    samples_per_pixel: number; //Count of random samples for each pixel
+
+    //
     pixel_delta_u: Vector3;
     pixel_delta_v: Vector3;
     pixel00_loc: Vector3;
 
-    constructor(opts?: {
+    constructor(opts: {
         aspect_ratio: number,
         image_width: number,
         center: Vector3,
         focal_length: number,
+        samples_per_pixel: number,
     }) {
         this.aspect_ratio = opts.aspect_ratio;
         this.image_width = opts.image_width;
         this.image_height = this.image_width / this.aspect_ratio >> 0;
         this.center = opts.center;
+        this.samples_per_pixel = opts.samples_per_pixel;
+
         const viewport_height = 2;
         const viewport_width = viewport_height * this.image_width / this.image_height;
 
@@ -54,11 +60,21 @@ function ray_color(ray: Ray, world: HittableList) {
 }
 
 export function renderPixel(camera: Camera, scene: HittableList, pixel_x: number, pixel_y: number) {
-    const { pixel00_loc, pixel_delta_u, pixel_delta_v, center } = camera;
-    const pixel_center = pixel00_loc.clone()
-        .addScaledVector(pixel_delta_u, pixel_x)
-        .addScaledVector(pixel_delta_v, pixel_y);
-    const ray_dir = pixel_center.clone().sub(center);
-    const ray = new Ray(center, ray_dir);
-    return ray_color(ray, scene);
+    const { pixel00_loc, pixel_delta_u, pixel_delta_v, center, samples_per_pixel } = camera;
+
+    const total_color = new Color(0, 0, 0);
+    for (let i = 0; i < samples_per_pixel; i++) {
+        const offset_x = Math.random() - 0.5;
+        const offset_y = Math.random() - 0.5;
+        const pixel_sample = pixel00_loc.clone()
+            .addScaledVector(pixel_delta_u, pixel_x + offset_x)
+            .addScaledVector(pixel_delta_v, pixel_y + offset_y);
+        const ray_dir = pixel_sample.sub(center);
+        const sample_color = ray_color(
+            new Ray(center, ray_dir),
+            scene
+        );
+        total_color.add(sample_color);
+    }
+    return total_color.divideScalar(samples_per_pixel); ///颜色平均
 }

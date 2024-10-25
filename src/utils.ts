@@ -18,6 +18,11 @@ export class Interval {
     static Empty = new Interval(Infinity, -Infinity);
     static Universe = new Interval(-Infinity, Infinity);
     constructor(public min: number, public max: number) { };
+    clamp(x: number) {
+        if (x < this.min) return this.min;
+        if (x > this.max) return this.max;
+        return x;
+    }
     size() {
         return this.max - this.min;
     }
