@@ -22,10 +22,12 @@ world.add(new Sphere(new Vector3(1, 0, -1), 0.5, mat_right));
 const camera = new Camera({
     aspect_ratio: 16 / 9,
     image_width: 400,
-    center: new Vector3(0, 0, 0),
-    focal_length: 1,
     samples_per_pixel: 50,
-    max_depth: 10
+    max_depth: 10,
+    lookfrom: new Vector3(-2, 2, 1),
+    lookat: new Vector3(0, 0, -1),
+    vup: new Vector3(0, 1, 0),
+    vfov: 20
 });
 
 const { image_height, image_width } = camera;

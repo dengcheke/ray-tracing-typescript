@@ -1,6 +1,6 @@
 import { HittableList } from "./object";
 import { Ray } from "./ray";
-import { Interval } from "./utils";
+import { deg_to_rad, Interval } from "./utils";
 import { Color, Vector3 } from "./vec3";
 
 
@@ -9,6 +9,10 @@ export class Camera {
     image_width: number;
     image_height: number;
     center: Vector3;
+    lookfrom: Vector3;
+    lookat: Vector3;
+    vup: Vector3;
+    //
     samples_per_pixel: number; //Count of random samples for each pixel
     max_depth: number; //Maximum number of ray bounces into scene
     //
@@ -19,32 +23,53 @@ export class Camera {
     constructor(opts: {
         aspect_ratio: number,
         image_width: number,
-        center: Vector3,
-        focal_length: number,
         samples_per_pixel: number,
         max_depth: number,
+        vfov: number,
+        lookfrom: Vector3,
+        lookat: Vector3,
+        vup: Vector3
     }) {
-        this.aspect_ratio = opts.aspect_ratio;
-        this.image_width = opts.image_width;
-        this.image_height = this.image_width / this.aspect_ratio >> 0;
-        this.center = opts.center;
-        this.samples_per_pixel = opts.samples_per_pixel;
-        this.max_depth = opts.max_depth;
-        const viewport_height = 2;
-        const viewport_width = viewport_height * this.image_width / this.image_height;
+        const {
+            aspect_ratio, image_width, samples_per_pixel,
+            max_depth, vfov, lookfrom, lookat, vup
+        } = opts;
+        //
+        this.samples_per_pixel = samples_per_pixel;
+        this.max_depth = max_depth;
+        //
+        this.aspect_ratio = aspect_ratio;
+        this.image_width = image_width;
+        this.image_height = image_width / aspect_ratio >> 0;
+        this.lookfrom = lookfrom;
+        this.lookat = lookat;
+        this.vup = vup;
+        this.center = lookfrom;
 
-        const viewport_u = new Vector3(viewport_width, 0, 0);
-        const viewport_v = new Vector3(0, -viewport_height, 0);
+        const focal_length = lookfrom.clone().sub(lookat).length();
+        debugger
+        const h = Math.tan(deg_to_rad(vfov) / 2);
+        const viewport_height = 2 * h * focal_length;
+        const viewport_width = viewport_height * image_width / this.image_height;
 
-        this.pixel_delta_u = viewport_u.clone().divideScalar(this.image_width);
+        //
+        const w = lookfrom.clone().sub(lookat).normalize();
+        const u = vup.clone().cross(w).normalize();
+        const v = w.clone().cross(u);
+
+        const viewport_u = u.clone().multiplyScalar(viewport_width);
+        const viewport_v = v.clone().multiplyScalar(-viewport_height);
+
+        this.pixel_delta_u = viewport_u.clone().divideScalar(image_width);
         this.pixel_delta_v = viewport_v.clone().divideScalar(this.image_height);
 
         this.pixel00_loc = this.center.clone()
-            .add(new Vector3(0, 0, -opts.focal_length))
+            .addScaledVector(w, -focal_length)
             .addScaledVector(viewport_u, -0.5)
             .addScaledVector(viewport_v, -0.5)
             .addScaledVector(this.pixel_delta_u, 0.5)
             .addScaledVector(this.pixel_delta_v, 0.5);
+        debugger
     }
 }
 
