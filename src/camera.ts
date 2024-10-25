@@ -10,7 +10,7 @@ export class Camera {
     image_height: number;
     center: Vector3;
     samples_per_pixel: number; //Count of random samples for each pixel
-
+    max_depth: number; //Maximum number of ray bounces into scene
     //
     pixel_delta_u: Vector3;
     pixel_delta_v: Vector3;
@@ -22,13 +22,14 @@ export class Camera {
         center: Vector3,
         focal_length: number,
         samples_per_pixel: number,
+        max_depth: number,
     }) {
         this.aspect_ratio = opts.aspect_ratio;
         this.image_width = opts.image_width;
         this.image_height = this.image_width / this.aspect_ratio >> 0;
         this.center = opts.center;
         this.samples_per_pixel = opts.samples_per_pixel;
-
+        this.max_depth = opts.max_depth;
         const viewport_height = 2;
         const viewport_width = viewport_height * this.image_width / this.image_height;
 
@@ -50,18 +51,28 @@ export class Camera {
 const c1 = new Color(1, 1, 1);
 const c2 = new Color(0.5, 0.7, 1);
 
-function ray_color(ray: Ray, world: HittableList) {
-    const hit_record = world.hit(ray, new Interval(0, Infinity));
+function ray_color(ray: Ray, depth: number, world: HittableList): Color {
+    if (depth <= 0) return new Color(0, 0, 0);
+    const hit_record = world.hit(ray, new Interval(0.001, Infinity));
     if (hit_record) {
-        return new Color(...hit_record.normal).addScalar(1).multiplyScalar(0.5);
+        const diffuse_dir = random_on_hemishpere(hit_record.normal);
+        return ray_color(
+            new Ray(hit_record.p, diffuse_dir),
+            depth - 1,
+            world
+        ).multiplyScalar(0.5);
     }
     const a = 0.5 * (ray.norm_dir.y + 1.0);
     return new Color().lerpVectors(c1, c2, a);
 }
 
-export function renderPixel(camera: Camera, scene: HittableList, pixel_x: number, pixel_y: number) {
-    const { pixel00_loc, pixel_delta_u, pixel_delta_v, center, samples_per_pixel } = camera;
+function random_on_hemishpere(normal: Vector3) {
+    const v = new Vector3().randomDirection();
+    return v.dot(normal) > 0 ? v : v.multiplyScalar(-1);
+}
 
+export function renderPixel(camera: Camera, scene: HittableList, pixel_x: number, pixel_y: number) {
+    const { max_depth, pixel00_loc, pixel_delta_u, pixel_delta_v, center, samples_per_pixel } = camera;
     const total_color = new Color(0, 0, 0);
     for (let i = 0; i < samples_per_pixel; i++) {
         const offset_x = Math.random() - 0.5;
@@ -72,6 +83,7 @@ export function renderPixel(camera: Camera, scene: HittableList, pixel_x: number
         const ray_dir = pixel_sample.sub(center);
         const sample_color = ray_color(
             new Ray(center, ray_dir),
+            max_depth,
             scene
         );
         total_color.add(sample_color);

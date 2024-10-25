@@ -131,6 +131,7 @@ export class Vector3 {
 
 export class Color extends Vector3 {
     static Red = new Color(1, 0, 0);
+    static Black = new Color(0, 0, 0);
     get r() { return this.x }
     get g() { return this.y }
     get b() { return this.z }

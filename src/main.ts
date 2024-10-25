@@ -12,7 +12,8 @@ const camera = new Camera({
     image_width: 400,
     center: new Vector3(0, 0, 0),
     focal_length: 1,
-    samples_per_pixel: 10,
+    samples_per_pixel: 50,
+    max_depth: 10
 });
 
 const { image_height, image_width } = camera;
@@ -38,7 +39,7 @@ let timer = requestAnimationFrame(function loop() {
             y += 1;
         }
         if (y === image_height) break;
-        if (performance.now() - start > 15) break;
+        if (performance.now() - start > 10) break;
     }
     ctx.putImageData(imagedata, 0, 0);
     if (y === image_height) return;
