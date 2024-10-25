@@ -55,7 +55,7 @@ function ray_color(ray: Ray, depth: number, world: HittableList): Color {
     if (depth <= 0) return new Color(0, 0, 0);
     const hit_record = world.hit(ray, new Interval(0.001, Infinity));
     if (hit_record) {
-        const diffuse_dir = random_on_hemishpere(hit_record.normal);
+        const diffuse_dir = new Vector3().randomDirection().add(hit_record.normal);
         return ray_color(
             new Ray(hit_record.p, diffuse_dir),
             depth - 1,
@@ -66,10 +66,6 @@ function ray_color(ray: Ray, depth: number, world: HittableList): Color {
     return new Color().lerpVectors(c1, c2, a);
 }
 
-function random_on_hemishpere(normal: Vector3) {
-    const v = new Vector3().randomDirection();
-    return v.dot(normal) > 0 ? v : v.multiplyScalar(-1);
-}
 
 export function renderPixel(camera: Camera, scene: HittableList, pixel_x: number, pixel_y: number) {
     const { max_depth, pixel00_loc, pixel_delta_u, pixel_delta_v, center, samples_per_pixel } = camera;
