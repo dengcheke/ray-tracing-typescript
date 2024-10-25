@@ -1,5 +1,6 @@
 import { Camera, renderPixel } from "./camera";
 import { HittableList, Sphere } from "./object";
+import { linearToSRGB } from "./utils";
 import { Color, Vector3 } from "./vec3";
 
 const world = new HittableList();
@@ -48,9 +49,9 @@ let timer = requestAnimationFrame(function loop() {
 
 function writePixel(x: number, y: number, color: Color) {
     const index = (x + y * image_width) * 4;
-    arraybuffer[index] = color.r * 255 >> 0;
-    arraybuffer[index + 1] = color.g * 255 >> 0;
-    arraybuffer[index + 2] = color.b * 255 >> 0;
+    arraybuffer[index] = linearToSRGB(color.r) * 255 >> 0;
+    arraybuffer[index + 1] = linearToSRGB(color.g) * 255 >> 0;
+    arraybuffer[index + 2] = linearToSRGB(color.b) * 255 >> 0;
     arraybuffer[index + 3] = 255;
 }
 

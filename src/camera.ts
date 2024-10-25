@@ -51,7 +51,7 @@ export class Camera {
 const c1 = new Color(1, 1, 1);
 const c2 = new Color(0.5, 0.7, 1);
 
-function ray_color(ray: Ray, depth: number, world: HittableList): Color {
+function ray_color(ray: Ray, depth: number, world: HittableList, reflectance: number): Color {
     if (depth <= 0) return new Color(0, 0, 0);
     const hit_record = world.hit(ray, new Interval(0.001, Infinity));
     if (hit_record) {
@@ -59,8 +59,9 @@ function ray_color(ray: Ray, depth: number, world: HittableList): Color {
         return ray_color(
             new Ray(hit_record.p, diffuse_dir),
             depth - 1,
-            world
-        ).multiplyScalar(0.5);
+            world,
+            reflectance
+        ).multiplyScalar(reflectance);
     }
     const a = 0.5 * (ray.norm_dir.y + 1.0);
     return new Color().lerpVectors(c1, c2, a);
@@ -68,7 +69,7 @@ function ray_color(ray: Ray, depth: number, world: HittableList): Color {
 
 
 export function renderPixel(camera: Camera, scene: HittableList, pixel_x: number, pixel_y: number) {
-    const { max_depth, pixel00_loc, pixel_delta_u, pixel_delta_v, center, samples_per_pixel } = camera;
+    const { image_width, max_depth, pixel00_loc, pixel_delta_u, pixel_delta_v, center, samples_per_pixel } = camera;
     const total_color = new Color(0, 0, 0);
     for (let i = 0; i < samples_per_pixel; i++) {
         const offset_x = Math.random() - 0.5;
@@ -80,7 +81,8 @@ export function renderPixel(camera: Camera, scene: HittableList, pixel_x: number
         const sample_color = ray_color(
             new Ray(center, ray_dir),
             max_depth,
-            scene
+            scene,
+            ((pixel_x / image_width * 10) >> 0) / 10
         );
         total_color.add(sample_color);
     }

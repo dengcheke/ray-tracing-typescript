@@ -13,7 +13,9 @@ export function degToRad(d: number) {
     return d / 180 * Math.PI;
 }
 
-
+export function linearToSRGB(v: number) {
+    return Math.sqrt(v);
+}
 export class Interval {
     static Empty = new Interval(Infinity, -Infinity);
     static Universe = new Interval(-Infinity, Infinity);
