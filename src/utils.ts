@@ -25,7 +25,13 @@ export function refract(v: Vector3, n: Vector3, etai_over_etat: number) {
     const s = -Math.sqrt(1.0 - r_perp.lengthSquared());
     return r_perp.addScaledVector(n, s);
 }
-
+export function distance_between(v1: Vector3, v2: Vector3) {
+    return Math.hypot(
+        v1.x - v2.x,
+        v1.y - v2.y,
+        v1.z - v2.z
+    );
+}
 //Schlick Approximation
 export function reflectance(cos: number, refraction_index: number) {
     let r0 = (1 - refraction_index) / (1 + refraction_index);

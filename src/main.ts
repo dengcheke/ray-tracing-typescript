@@ -1,37 +1,63 @@
 import { Camera, renderPixel } from "./camera";
 import { DielectricMaterial, LambertianMaterial, MetalMaterial } from "./material";
 import { HittableList, Sphere } from "./object";
-import { linearToSRGB } from "./utils";
+import { distance_between, linearToSRGB, random } from "./utils";
 import { Color, Vector3 } from "./vec3";
 
 const world = new HittableList();
 
-const mat_ground = new LambertianMaterial(new Color(0.8, 0.8, 0));
-const mat_center = new LambertianMaterial(new Color(0.1, 0.2, 0.5));
-const mat_left = new DielectricMaterial(1.5);
-const mat_bubble = new DielectricMaterial(1 / 1.5);
-const mat_right = new MetalMaterial(new Color(0.8, 0.6, 0.2), 1.0);
+const mat_ground = new LambertianMaterial(new Color(0.5, 0.5, 0.5));
+world.add(new Sphere(new Vector3(0, -1000, 0), 1000, mat_ground));
 
-world.add(new Sphere(new Vector3(0, -100.5, -1), 100, mat_ground));
-world.add(new Sphere(new Vector3(0, 0, -1.2), 0.5, mat_center));
-world.add(new Sphere(new Vector3(-1, 0, -1), 0.5, mat_left));
-world.add(new Sphere(new Vector3(-1, 0, -1), 0.4, mat_bubble));
-world.add(new Sphere(new Vector3(1, 0, -1), 0.5, mat_right));
+const p1 = new Vector3(4, 0.2, 0);
+for (let a = -11; a < 11; a++) {
+    for (let b = -11; b < 11; b++) {
+        const choose_mat = Math.random();
+        const center = new Vector3(
+            a + 0.9 * Math.random(),
+            0.2,
+            b + 0.9 * Math.random()
+        );
+        if (distance_between(p1, center) > 0.9) {
+            if (choose_mat < 0.8) {
+                const albedo = new Color().random().multiply(new Color().random());
+                const material = new LambertianMaterial(albedo);
+                world.add(new Sphere(center, 0.2, material));
+            } else if (choose_mat < 0.95) {
+                const albedo = new Color().random(0.5, 1);
+                const fuzz = random(0, 0.5);
+                const material = new MetalMaterial(albedo, fuzz);
+                world.add(new Sphere(center, 0.2, material));
+            } else {
+                //glass
+                world.add(new Sphere(center, 0.2, new DielectricMaterial(1.5)));
+            }
+        }
+    }
+}
 
+const material1 = new DielectricMaterial(1.5);
+world.add(new Sphere(new Vector3(0, 1, 0), 1, material1));
+
+const material2 = new LambertianMaterial(new Color(0.4, 0.2, 0.1));
+world.add(new Sphere(new Vector3(-4, 1, 0), 1, material2));
+
+const material3 = new MetalMaterial(new Color(0.7, 0.6, 0.5), 0);
+world.add(new Sphere(new Vector3(4, 1, 0), 1, material3));
 
 const camera = new Camera({
     aspect_ratio: 16 / 9,
     image_width: 400,
-    samples_per_pixel: 50,
-    max_depth: 10,
+    samples_per_pixel: 500,
+    max_depth: 50,
 
     vfov: 20,
-    lookfrom: new Vector3(-2, 2, 1),
-    lookat: new Vector3(0, 0, -1),
+    lookfrom: new Vector3(13, 2, 3),
+    lookat: new Vector3(0, 0, 0),
     vup: new Vector3(0, 1, 0),
 
-    defocus_angle: 10,
-    focus_dist: 3.4,
+    defocus_angle: 0.6,
+    focus_dist: 10,
 });
 
 const { image_height, image_width } = camera;
