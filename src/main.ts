@@ -24,10 +24,14 @@ const camera = new Camera({
     image_width: 400,
     samples_per_pixel: 50,
     max_depth: 10,
+
+    vfov: 20,
     lookfrom: new Vector3(-2, 2, 1),
     lookat: new Vector3(0, 0, -1),
     vup: new Vector3(0, 1, 0),
-    vfov: 20
+
+    defocus_angle: 10,
+    focus_dist: 3.4,
 });
 
 const { image_height, image_width } = camera;

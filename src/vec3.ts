@@ -93,19 +93,6 @@ export class Vector3 {
 
         return this;
     }
-    randomDirection() {
-        // https://mathworld.wolfram.com/SpherePointPicking.html
-        const theta = Math.random() * Math.PI * 2;
-        const u = Math.random() * 2 - 1;
-        const c = Math.sqrt(1 - u * u);
-
-        this.x = c * Math.cos(theta);
-        this.y = u;
-        this.z = c * Math.sin(theta);
-
-        return this;
-
-    }
     lerpVectors(v1: Vector3, v2: Vector3, alpha: number) {
         this.x = v1.x + (v2.x - v1.x) * alpha;
         this.y = v1.y + (v2.y - v1.y) * alpha;

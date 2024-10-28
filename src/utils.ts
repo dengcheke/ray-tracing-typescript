@@ -33,6 +33,27 @@ export function reflectance(cos: number, refraction_index: number) {
     return r0 + (1 - r0) * Math.pow(1 - cos, 5);
 }
 
+export function random_unit_direction() {
+    // https://mathworld.wolfram.com/SpherePointPicking.html
+    const theta = Math.random() * Math.PI * 2;
+    const u = Math.random() * 2 - 1;
+    const c = Math.sqrt(1 - u * u);
+
+    const x = c * Math.cos(theta);
+    const y = u;
+    const z = c * Math.sin(theta);
+
+    return new Vector3(x, y, z);
+}
+
+export function random_in_unit_disk() {
+    const r = Math.random();
+    const theta = Math.PI * 2 * Math.random();
+    return [
+        Math.cos(theta) * r,
+        Math.sin(theta) * r
+    ]
+}
 
 export function deg_to_rad(d: number) {
     return d / 180 * Math.PI;

@@ -1,6 +1,6 @@
 import { HitRecord } from "./object"
 import { Ray } from "./ray"
-import { is_near_zero, reflect, reflectance, refract } from "./utils";
+import { is_near_zero, random_unit_direction, reflect, reflectance, refract } from "./utils";
 import { Color, Vector3 } from "./vec3";
 
 export interface Material {
@@ -17,7 +17,7 @@ export interface Material {
 export class LambertianMaterial implements Material {
     constructor(public albedo: Color) { };
     scatter(ray_in: Ray, hit_record: HitRecord) {
-        let scatter_dir = new Vector3().randomDirection().add(hit_record.normal);
+        let scatter_dir = random_unit_direction().add(hit_record.normal);
         if (is_near_zero(scatter_dir)) {
             scatter_dir = hit_record.normal;
         }
@@ -33,7 +33,7 @@ export class MetalMaterial implements Material {
     scatter(ray_in: Ray, hit_record: HitRecord) {
         const reflect_dir = reflect(ray_in.dir, hit_record.normal);
         reflect_dir.normalize()
-            .addScaledVector(new Vector3().randomDirection(), this.fuzz);
+            .addScaledVector(random_unit_direction(), this.fuzz);
         if (reflect_dir.dot(hit_record.normal) <= 0) return false;
         return {
             ray_scatter: new Ray(hit_record.p, reflect_dir),
