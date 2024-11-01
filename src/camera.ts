@@ -16,7 +16,7 @@ function resolveDefaults(opts: ConstructorParameters<typeof Camera>[0]) {
     opts.lookat = opts.lookat ?? new Vector3(0, 0, -1);
     opts.vup = opts.vup ?? new Vector3(0, 1, 0);
 
-    opts.defocus_angle = opts.defocus_angle ?? 90;
+    opts.defocus_angle = opts.defocus_angle ?? 0;
     opts.focus_dist = opts.focus_dist ?? 10;
 
     return opts;
