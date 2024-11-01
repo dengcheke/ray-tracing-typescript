@@ -30,7 +30,7 @@ export class LambertianMaterial implements Material {
             scatter_dir = hit_record.normal;
         }
         return {
-            ray_scatter: new Ray(hit_record.p, scatter_dir),
+            ray_scatter: new Ray(hit_record.p, scatter_dir, ray_in.tm),
             attenuation: this.albedo
         }
     }
@@ -55,7 +55,7 @@ export class MetalMaterial implements Material {
             .addScaledVector(random_unit_direction(), this.fuzz);
         if (reflect_dir.dot(hit_record.normal) <= 0) return false;
         return {
-            ray_scatter: new Ray(hit_record.p, reflect_dir),
+            ray_scatter: new Ray(hit_record.p, reflect_dir, ray_in.tm),
             attenuation: this.albedo
         }
     }
@@ -90,7 +90,7 @@ export class DielectricMaterial implements Material {
             ? reflect(ray_in.norm_dir, hit_record.normal)
             : refract(ray_in.norm_dir, hit_record.normal, ri);
         return {
-            ray_scatter: new Ray(hit_record.p, refract_dir),
+            ray_scatter: new Ray(hit_record.p, refract_dir, ray_in.tm),
             attenuation: DielectricMaterial.Attenuation
         }
     }

@@ -24,7 +24,9 @@ for (let a = -11; a < 11; a++) {
             if (choose_mat < 0.8) {
                 const albedo = new Color().random().multiply(new Color().random());
                 const material = new LambertianMaterial(albedo);
-                world.add(new Sphere(center, 0.2, material));
+                const center2 = center.clone();
+                center2.y += random(0, 0.5);
+                world.add(new Sphere(center, center2, 0.2, material));
             } else if (choose_mat < 0.95) {
                 const albedo = new Color().random(0.5, 1);
                 const fuzz = random(0, 0.5);
@@ -50,8 +52,8 @@ world.add(new Sphere(new Vector3(4, 1, 0), 1, material3));
 const camera = new Camera({
     aspect_ratio: 16 / 9,
     image_width: 400,
-    samples_per_pixel: 500,
-    max_depth: 100,
+    samples_per_pixel: 100,
+    max_depth: 50,
 
     vfov: 20,
     lookfrom: new Vector3(13, 2, 3),

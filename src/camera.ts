@@ -191,8 +191,9 @@ export function renderPixel(camera: Camera, scene: Hittable, pixel_x: number, pi
 
         const ray_origin = defocus_angle <= 0 ? center : defocus_disk_sample();
         const ray_dir = pixel_sample.sub(ray_origin);
+        const ray_time = Math.random();
         const sample_color = rayColor(
-            new Ray(ray_origin, ray_dir),
+            new Ray(ray_origin, ray_dir, ray_time),
             max_depth,
             scene
         );
