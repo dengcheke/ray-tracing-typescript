@@ -3,11 +3,13 @@ import { Material, materialFromJSON } from "../material";
 import { Ray } from "../ray";
 import { assertEqual } from "../utils";
 import { Vector3 } from "../vec3";
+import { AABB } from "./aabb";
 import { HitRecord, Hittable } from "./hittable";
 
 export class Sphere implements Hittable {
     static type = '_Sphere';
 
+    bbox: AABB;
     center: Ray;
     radius: number;
     material: Material;
@@ -28,6 +30,19 @@ export class Sphere implements Hittable {
             this.radius = radius;
             this.material = material;
         }
+        this.updateBbox();
+    }
+
+    private updateBbox() {
+        const { center, radius } = this;
+        const rvec = new Vector3(radius, radius, radius);
+        const box1 = new AABB(center.at(0).sub(rvec), center.at(0).add(rvec));
+        const box2 = new AABB(center.at(1).sub(rvec), center.at(1).add(rvec));
+        this.bbox = new AABB(box1, box2);
+    }
+
+    bounding_box(): AABB {
+        return this.bbox
     }
 
     hit(ray: Ray, ray_t: Interval) {
@@ -71,6 +86,7 @@ export class Sphere implements Hittable {
         s.center = Ray.fromJSON(opts.center);
         s.radius = opts.radius;
         s.material = materialFromJSON(opts.material);
+        s.updateBbox();
         return s;
     }
 }

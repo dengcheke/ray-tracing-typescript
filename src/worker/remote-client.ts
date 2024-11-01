@@ -1,10 +1,12 @@
 import { Camera, renderPixel } from "../camera";
+import { BvhNode } from "../object/bvh";
 import { HittableList } from "../object/hittable-list";
 import { linearToSRGB } from "../utils";
 import { BuildScene_res, EventKey, Message, RenderPixels_res } from "./interface";
 
 
 let world: HittableList;
+let bvh: BvhNode;
 let camera: Camera;
 self.onmessage = e => {
     const data = e.data as Message;
@@ -12,6 +14,7 @@ self.onmessage = e => {
     if (data.type === EventKey.构建场景) {
         try {
             world = HittableList.fromJSON(data.data.world);
+            bvh = new BvhNode(world.objects);
             camera = Camera.fromJSON(data.data.camera);
             self.postMessage({
                 taskId,
@@ -34,7 +37,7 @@ self.onmessage = e => {
             for (let index = start; index < end; index++) {
                 const py = index / camera.image_width >> 0;
                 const px = index - py * camera.image_width;
-                const color = renderPixel(camera, world, px, py);
+                const color = renderPixel(camera, bvh, px, py);
                 const data_index = (index - start) * 4;
                 result[data_index] = linearToSRGB(color.r) * 255 >> 0;
                 result[data_index + 1] = linearToSRGB(color.g) * 255 >> 0;

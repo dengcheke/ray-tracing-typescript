@@ -12,6 +12,11 @@ export function random(min?: number, max?: number) {
         return lerp(min, max, Math.random());
     }
 }
+
+export function random_int(min: number, max: number) {
+    return random(min, max + 1) >> 0;
+}
+
 const epsilon = 1e-6;
 export function is_near_zero(v: Vector3) {
     return [...v].every(comp => Math.abs(comp) < epsilon);
@@ -69,4 +74,10 @@ export function deg_to_rad(d: number) {
 
 export function linearToSRGB(v: number) {
     return Math.sqrt(v);
+}
+
+export enum AXIS {
+    X = 0,
+    Y = 1,
+    Z = 2
 }

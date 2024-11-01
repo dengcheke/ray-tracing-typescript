@@ -1,8 +1,13 @@
 
-import { assertEqual, random } from "./utils";
+import { assertEqual, AXIS, random } from "./utils";
 export class Vector3 {
     static type = '_Vector3';
     constructor(public x = 0, public y = 0, public z = 0) { }
+    getComponent(n: number) {
+        if (n === AXIS.X) return this.x;
+        if (n === AXIS.Y) return this.y;
+        return this.z;
+    }
     set(x: number, y: number, z: number) {
         this.x = x;
         this.y = y;

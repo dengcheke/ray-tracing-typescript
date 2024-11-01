@@ -3,19 +3,28 @@ import { Ray } from "../ray";
 import { assertEqual } from "../utils";
 import { HitRecord, Hittable } from "./hittable";
 import { Interval } from "../interval";
+import { AABB } from "./aabb";
 
 export class HittableList implements Hittable {
     static type = '_HittableList';
     objects: Hittable[];
+    bbox: AABB;
+
 
     constructor(object?: Hittable) {
         this.objects = [];
+        this.bbox = new AABB();
         this.add(object);
+    }
+
+    bounding_box(): AABB {
+        return this.bbox;
     }
 
     add(obj: Hittable) {
         if (!obj) return this;
         this.objects.push(obj);
+        this.bbox = new AABB(this.bbox, obj.bounding_box());
         return this;
     }
 
