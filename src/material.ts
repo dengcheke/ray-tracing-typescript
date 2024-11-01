@@ -1,5 +1,6 @@
 import { HitRecord } from "./object/hittable";
 import { Ray } from "./ray";
+import { SolidColorTexture, Texture, textureFromJSON } from "./texture";
 import { assertEqual, is_near_zero, random_unit_direction, reflect, reflectance, refract } from "./utils";
 import { Color } from "./vec3";
 
@@ -11,38 +12,40 @@ export interface Material {
     toJSON(): any;
 }
 
-export function materialFromJSON(opts: any) {
-    switch (opts.type) {
-        case LambertianMaterial.type: return LambertianMaterial.fromJSON(opts);
-        case MetalMaterial.type: return MetalMaterial.fromJSON(opts);
-        case DielectricMaterial.type: return DielectricMaterial.fromJSON(opts);
-        default: throw new Error("错误的material类型:" + opts.type);
-    }
-}
 
 
 export class LambertianMaterial implements Material {
     static type = '_LambertianMaterial'
-    constructor(public albedo: Color) { };
+    tex: Texture;
+
+    constructor(albedo_or_tex: Color | Texture) {
+        if (albedo_or_tex instanceof Color) {
+            this.tex = new SolidColorTexture(albedo_or_tex);
+        } else {
+            this.tex = albedo_or_tex;
+        }
+    }
+
     scatter(ray_in: Ray, hit_record: HitRecord) {
         let scatter_dir = random_unit_direction().add(hit_record.normal);
         if (is_near_zero(scatter_dir)) {
             scatter_dir = hit_record.normal;
         }
+        const attenuation = this.tex.value(hit_record.u, hit_record.v, hit_record.p);
         return {
             ray_scatter: new Ray(hit_record.p, scatter_dir, ray_in.tm),
-            attenuation: this.albedo
+            attenuation
         }
     }
     toJSON() {
         return {
             type: LambertianMaterial.type,
-            albedo: this.albedo.toJSON(),
+            tex: this.tex.toJSON()
         }
     }
     static fromJSON(opts: any) {
         assertEqual(opts.type, LambertianMaterial.type);
-        return new LambertianMaterial(Color.fromJSON(opts.albedo));
+        return new LambertianMaterial(textureFromJSON(opts.tex));
     }
 }
 
@@ -103,5 +106,19 @@ export class DielectricMaterial implements Material {
     static fromJSON(opts: any) {
         assertEqual(opts.type, DielectricMaterial.type);
         return new DielectricMaterial(opts.refraction_index);
+    }
+}
+
+
+export function materialFromJSON(opts: any) {
+    switch (opts.type) {
+        case LambertianMaterial.type:
+            return LambertianMaterial.fromJSON(opts);
+        case MetalMaterial.type:
+            return MetalMaterial.fromJSON(opts);
+        case DielectricMaterial.type:
+            return DielectricMaterial.fromJSON(opts);
+        default:
+            throw new Error("错误的material类型:" + opts.type);
     }
 }

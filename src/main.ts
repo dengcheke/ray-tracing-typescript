@@ -8,8 +8,12 @@ import { initWorker } from "./worker/initial";
 
 const world = new HittableList();
 
-const mat_ground = new LambertianMaterial(new Color(0.5, 0.5, 0.5));
-world.add(new Sphere(new Vector3(0, -1000, 0), 1000, mat_ground));
+const checker = new CheckerTexture(0.32, new Color(0.2, 0.3, 0.1), new Color(0.9, 0.9, 0.9));
+world.add(new Sphere(
+    new Vector3(0, -1000, 0), 
+    1000, 
+    new LambertianMaterial(checker)
+));
 
 const p1 = new Vector3(4, 0.2, 0);
 for (let a = -11; a < 11; a++) {
@@ -51,7 +55,7 @@ world.add(new Sphere(new Vector3(4, 1, 0), 1, material3));
 
 const camera = new Camera({
     aspect_ratio: 16 / 9,
-    image_width: 1200,
+    image_width: 400,
     samples_per_pixel: 100,
     max_depth: 50,
 
@@ -67,6 +71,7 @@ const camera = new Camera({
 
 import CustomWorker from './worker/remote-client?worker';
 import { HittableList } from "./object/hittable-list";
+import { CheckerTexture } from "./texture";
 type Client = ReturnType<typeof initWorker> & { _busy?: boolean };
 const workers = [] as Client[];
 const workerNum = Math.max(navigator.hardwareConcurrency / 2, 1);

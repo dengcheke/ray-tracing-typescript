@@ -9,6 +9,9 @@ export class HitRecord {
     t: number; //射线t
     front_face: boolean;
     mat: Material; //材质
+    //纹理坐标
+    u: number;
+    v: number;
     set_face_normal(ray: Ray, outward_normal: Vector3) {
         this.front_face = ray.dir.dot(outward_normal) < 0;
         this.normal = this.front_face ? outward_normal : outward_normal.clone().multiplyScalar(-1);

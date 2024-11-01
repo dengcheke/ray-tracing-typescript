@@ -119,7 +119,7 @@ export class Vector3 {
             z: this.z
         }
     }
-    static fromJSON(opts: any) {
+    static fromJSON(opts: ReturnType<Vector3['toJSON']>) {
         assertEqual(opts.type, Vector3.type);
         return new Vector3(opts.x, opts.y, opts.z);
     }
@@ -142,7 +142,7 @@ export class Color extends Vector3 {
             z: this.z
         }
     }
-    static fromJSON(opts: any) {
+    static fromJSON(opts: ReturnType<Color['toJSON']>) {
         assertEqual(opts.type, Color.type);
         return new Color(opts.x, opts.y, opts.z);
     }
