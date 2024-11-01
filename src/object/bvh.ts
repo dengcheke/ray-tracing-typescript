@@ -10,7 +10,11 @@ export class BvhNode implements Hittable {
     bbox: AABB;
 
     constructor(objects: Hittable[]) {
-        const axis = random_int(0, 2);
+        this.bbox = objects.reduce((box, object) => {
+            box = new AABB(box, object.bounding_box());
+            return box;
+        }, AABB.Empty);
+        const axis = this.bbox.longest_axis();
 
         const comparator = axis === AXIS.X
             ? BvhNode.box_x_compare
@@ -30,7 +34,6 @@ export class BvhNode implements Hittable {
             this.left = new BvhNode(objects.slice(0, mid));
             this.right = new BvhNode(objects.slice(mid));
         }
-        this.bbox = new AABB(this.left.bounding_box(), this.right.bounding_box());
     }
 
     hit(ray: Ray, ray_t: Interval) {

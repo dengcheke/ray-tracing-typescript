@@ -7,6 +7,8 @@ export class AABB {
     x: Interval;
     y: Interval;
     z: Interval;
+    static Empty = new AABB(Interval.Empty, Interval.Empty, Interval.Empty);
+    static Universe = new AABB(Interval.Universe, Interval.Universe, Interval.Universe);
 
     constructor()
     constructor(x: Interval, y: Interval, z: Interval)
@@ -65,5 +67,22 @@ export class AABB {
             if (interval.max <= interval.min) return false;
         }
         return true;
+    }
+    longest_axis() {
+        const size_x = this.x.size();
+        const size_y = this.y.size();
+        const size_z = this.z.size();
+        if (size_x > size_y) {
+            return size_x > size_z ? AXIS.X : AXIS.Z;
+        } else {
+            return size_y > size_z ? AXIS.Y : AXIS.Z;
+        }
+    }
+    clone() {
+        return new AABB(
+            this.x.clone(),
+            this.y.clone(),
+            this.z.clone(),
+        );
     }
 }

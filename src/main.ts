@@ -51,7 +51,7 @@ world.add(new Sphere(new Vector3(4, 1, 0), 1, material3));
 
 const camera = new Camera({
     aspect_ratio: 16 / 9,
-    image_width: 400,
+    image_width: 1200,
     samples_per_pixel: 100,
     max_depth: 50,
 
