@@ -1,5 +1,7 @@
 import { Vector3 } from "./vec3";
-
+export function assertEqual(s1: any, s2: any, msg?: string) {
+    if (s1 !== s2) throw new Error(msg || 'not equal!');
+}
 export function lerp(min: number, max: number, t: number) {
     return (max - min) * t + min;
 }
@@ -67,24 +69,4 @@ export function deg_to_rad(d: number) {
 
 export function linearToSRGB(v: number) {
     return Math.sqrt(v);
-}
-export class Interval {
-    static Empty = new Interval(Infinity, -Infinity);
-    static Universe = new Interval(-Infinity, Infinity);
-    constructor(public min: number, public max: number) { };
-    clamp(x: number) {
-        if (x < this.min) return this.min;
-        if (x > this.max) return this.max;
-        return x;
-    }
-    size() {
-        return this.max - this.min;
-    }
-    contains(x: number) {
-        return x >= this.min && x <= this.max;
-    }
-    surrounds(x: number) {
-        return x > this.min && x < this.max;
-    }
-
 }

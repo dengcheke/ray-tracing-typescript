@@ -1,15 +1,14 @@
-import { random } from "./utils";
 
+import { assertEqual, random } from "./utils";
 export class Vector3 {
+    static type = '_Vector3';
     constructor(public x = 0, public y = 0, public z = 0) { }
-
     set(x: number, y: number, z: number) {
         this.x = x;
         this.y = y;
         this.z = z;
         return this;
     }
-
     add(v: Vector3) {
         this.x += v.x;
         this.y += v.y;
@@ -22,14 +21,12 @@ export class Vector3 {
         this.z += s;
         return this;
     }
-
     addScaledVector(v: Vector3, s: number) {
         this.x += v.x * s;
         this.y += v.y * s;
         this.z += v.z * s;
         return this;
     }
-
     sub(v: Vector3) {
         this.x -= v.x;
         this.y -= v.y;
@@ -43,29 +40,24 @@ export class Vector3 {
         this.z *= v.z;
         return this;
     }
-
     multiplyScalar(scalar: number) {
         this.x *= scalar;
         this.y *= scalar;
         this.z *= scalar;
         return this;
     }
-
     divide(v: Vector3) {
         this.x /= v.x;
         this.y /= v.y;
         this.z /= v.z;
         return this;
     }
-
     divideScalar(scalar: number) {
         return this.multiplyScalar(1 / scalar);
     }
-
     dot(v: Vector3) {
         return this.x * v.x + this.y * v.y + this.z * v.z;
     }
-
     cross(b: Vector3) {
 
         const ax = this.x, ay = this.y, az = this.z;
@@ -113,13 +105,40 @@ export class Vector3 {
         yield this.y;
         yield this.z;
     }
+
+    toJSON() {
+        return {
+            type: Vector3.type,
+            x: this.x,
+            y: this.y,
+            z: this.z
+        }
+    }
+    static fromJSON(opts: any) {
+        assertEqual(opts.type, Vector3.type);
+        return new Vector3(opts.x, opts.y, opts.z);
+    }
 }
 
 
 export class Color extends Vector3 {
+    static type = '_Color';
     static Red = new Color(1, 0, 0);
     static Black = new Color(0, 0, 0);
     get r() { return this.x }
     get g() { return this.y }
     get b() { return this.z }
+
+    toJSON() {
+        return {
+            type: Color.type,
+            x: this.x,
+            y: this.y,
+            z: this.z
+        }
+    }
+    static fromJSON(opts: any) {
+        assertEqual(opts.type, Color.type);
+        return new Color(opts.x, opts.y, opts.z);
+    }
 }

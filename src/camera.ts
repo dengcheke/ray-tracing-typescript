@@ -1,6 +1,7 @@
-import { HittableList } from "./object";
+import { Interval } from "./interval";
+import { Hittable } from "./object/hittable";
 import { Ray } from "./ray";
-import { deg_to_rad, Interval, random_in_unit_disk } from "./utils";
+import { assertEqual, deg_to_rad, random_in_unit_disk } from "./utils";
 import { Color, Vector3 } from "./vec3";
 
 
@@ -22,6 +23,7 @@ function resolveDefaults(opts: ConstructorParameters<typeof Camera>[0]) {
 }
 
 export class Camera {
+    static type = "_Camera";
     aspect_ratio: number;
     image_width: number;
     image_height: number;
@@ -42,7 +44,7 @@ export class Camera {
     defocus_disk_u: Vector3;
     defocus_disk_v: Vector3;
 
-    constructor(opts: Partial<{
+    constructor(opts?: Partial<{
         aspect_ratio: number,
         image_width: number,
         samples_per_pixel: number,
@@ -54,6 +56,7 @@ export class Camera {
         focus_dist: number,
         defocus_angle: number,
     }>) {
+        if (!opts) return;
         const {
             aspect_ratio, image_width, samples_per_pixel, max_depth,
             vfov, lookfrom, lookat, vup,
@@ -101,12 +104,61 @@ export class Camera {
         this.defocus_disk_u = u.clone().multiplyScalar(defocus_radius);
         this.defocus_disk_v = v.clone().multiplyScalar(defocus_radius);
     }
+
+    toJSON() {
+        return {
+            type: Camera.type,
+            aspect_ratio: this.aspect_ratio,
+            image_width: this.image_width,
+            image_height: this.image_height,
+            //
+            center: this.center.toJSON(),
+            lookfrom: this.lookfrom.toJSON(),
+            lookat: this.lookat.toJSON(),
+            vup: this.vup.toJSON(),
+            focus_dist: this.focus_dist,
+            defocus_angle: this.defocus_angle,
+            //
+            samples_per_pixel: this.samples_per_pixel,
+            max_depth: this.max_depth,
+            //
+            pixel_delta_u: this.pixel_delta_u.toJSON(),
+            pixel_delta_v: this.pixel_delta_v.toJSON(),
+            pixel00_loc: this.pixel00_loc.toJSON(),
+            defocus_disk_u: this.defocus_disk_u.toJSON(),
+            defocus_disk_v: this.defocus_disk_v.toJSON()
+        }
+    }
+    static fromJSON(opts: any) {
+        assertEqual(opts.type, Camera.type);
+        const camera = new Camera();
+        camera.aspect_ratio = opts.aspect_ratio;
+        camera.image_width = opts.image_width;
+        camera.image_height = opts.image_height;
+        //
+        camera.center = Vector3.fromJSON(opts.center);
+        camera.lookfrom = Vector3.fromJSON(opts.lookfrom);
+        camera.lookat = Vector3.fromJSON(opts.lookat);
+        camera.vup = Vector3.fromJSON(opts.vup);
+        camera.focus_dist = opts.focus_dist;
+        camera.defocus_angle = opts.defocus_angle;
+        //
+        camera.samples_per_pixel = opts.samples_per_pixel;
+        camera.max_depth = opts.max_depth;
+        //
+        camera.pixel_delta_u = Vector3.fromJSON(opts.pixel_delta_u);
+        camera.pixel_delta_v = Vector3.fromJSON(opts.pixel_delta_v);
+        camera.pixel00_loc = Vector3.fromJSON(opts.pixel00_loc);
+        camera.defocus_disk_u = Vector3.fromJSON(opts.defocus_disk_u);
+        camera.defocus_disk_v = Vector3.fromJSON(opts.defocus_disk_v);
+        return camera;
+    }
 }
 
 const c1 = new Color(1, 1, 1);
 const c2 = new Color(0.5, 0.7, 1);
 
-function rayColor(ray: Ray, depth: number, world: HittableList): Color {
+function rayColor(ray: Ray, depth: number, world: Hittable): Color {
     if (depth <= 0) return new Color(0, 0, 0);
     const hit_record = world.hit(ray, new Interval(0.001, Infinity));
     if (hit_record) {
@@ -122,7 +174,7 @@ function rayColor(ray: Ray, depth: number, world: HittableList): Color {
 }
 
 
-export function renderPixel(camera: Camera, scene: HittableList, pixel_x: number, pixel_y: number) {
+export function renderPixel(camera: Camera, scene: Hittable, pixel_x: number, pixel_y: number) {
     const { max_depth, defocus_angle,
         pixel00_loc, pixel_delta_u, pixel_delta_v,
         center, samples_per_pixel,

@@ -1,20 +1,28 @@
-import { HitRecord } from "./object"
-import { Ray } from "./ray"
-import { is_near_zero, random_unit_direction, reflect, reflectance, refract } from "./utils";
-import { Color, Vector3 } from "./vec3";
+import { HitRecord } from "./object/hittable";
+import { Ray } from "./ray";
+import { assertEqual, is_near_zero, random_unit_direction, reflect, reflectance, refract } from "./utils";
+import { Color } from "./vec3";
 
 export interface Material {
-    scatter(
-        ray_in: Ray,
-        hit_record: HitRecord,
-    ): false | {
+    scatter(ray_in: Ray, hit_record: HitRecord): false | {
         ray_scatter: Ray,
         attenuation: Color
     };
+    toJSON(): any;
+}
+
+export function materialFromJSON(opts: any) {
+    switch (opts.type) {
+        case LambertianMaterial.type: return LambertianMaterial.fromJSON(opts);
+        case MetalMaterial.type: return MetalMaterial.fromJSON(opts);
+        case DielectricMaterial.type: return DielectricMaterial.fromJSON(opts);
+        default: throw new Error("错误的material类型:" + opts.type);
+    }
 }
 
 
 export class LambertianMaterial implements Material {
+    static type = '_LambertianMaterial'
     constructor(public albedo: Color) { };
     scatter(ray_in: Ray, hit_record: HitRecord) {
         let scatter_dir = random_unit_direction().add(hit_record.normal);
@@ -26,9 +34,20 @@ export class LambertianMaterial implements Material {
             attenuation: this.albedo
         }
     }
+    toJSON() {
+        return {
+            type: LambertianMaterial.type,
+            albedo: this.albedo.toJSON(),
+        }
+    }
+    static fromJSON(opts: any) {
+        assertEqual(opts.type, LambertianMaterial.type);
+        return new LambertianMaterial(Color.fromJSON(opts.albedo));
+    }
 }
 
 export class MetalMaterial implements Material {
+    static type = '_MetalMaterial'
     constructor(public albedo: Color, public fuzz: number) { }
     scatter(ray_in: Ray, hit_record: HitRecord) {
         const reflect_dir = reflect(ray_in.dir, hit_record.normal);
@@ -40,10 +59,22 @@ export class MetalMaterial implements Material {
             attenuation: this.albedo
         }
     }
+    toJSON() {
+        return {
+            type: MetalMaterial.type,
+            albedo: this.albedo.toJSON(),
+            fuzz: this.fuzz
+        }
+    }
+    static fromJSON(opts: any) {
+        assertEqual(opts.type, MetalMaterial.type);
+        return new MetalMaterial(Color.fromJSON(opts.albedo), opts.fuzz);
+    }
 }
 
 
 export class DielectricMaterial implements Material {
+    static type = '_DielectricMaterial';
     static Attenuation = new Color(1, 1, 1);
     // Refractive index in vacuum or air, or the ratio of the material's refractive index over
     // the refractive index of the enclosing media
@@ -62,5 +93,15 @@ export class DielectricMaterial implements Material {
             ray_scatter: new Ray(hit_record.p, refract_dir),
             attenuation: DielectricMaterial.Attenuation
         }
+    }
+    toJSON() {
+        return {
+            type: DielectricMaterial.type,
+            refraction_index: this.refraction_index
+        }
+    }
+    static fromJSON(opts: any) {
+        assertEqual(opts.type, DielectricMaterial.type);
+        return new DielectricMaterial(opts.refraction_index);
     }
 }
