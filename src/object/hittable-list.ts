@@ -10,7 +10,6 @@ export class HittableList implements Hittable {
     objects: Hittable[];
     bbox: AABB;
 
-
     constructor(object?: Hittable) {
         this.objects = [];
         this.bbox = new AABB();

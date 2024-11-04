@@ -1,6 +1,6 @@
 import { HitRecord } from "./object/hittable";
 import { Ray } from "./ray";
-import { SolidColorTexture, Texture, textureFromJSON } from "./texture";
+import { ImageTexture, SolidColorTexture, Texture, textureFromJSON } from "./texture";
 import { assertEqual, is_near_zero, random_unit_direction, reflect, reflectance, refract } from "./utils";
 import { Color } from "./vec3";
 
@@ -25,7 +25,13 @@ export class LambertianMaterial implements Material {
             this.tex = albedo_or_tex;
         }
     }
-
+    load() {
+        if (this.tex instanceof ImageTexture) {
+            return this.tex.load();
+        } else {
+            return Promise.resolve();
+        }
+    }
     scatter(ray_in: Ray, hit_record: HitRecord) {
         let scatter_dir = random_unit_direction().add(hit_record.normal);
         if (is_near_zero(scatter_dir)) {

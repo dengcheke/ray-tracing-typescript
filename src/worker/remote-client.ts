@@ -1,8 +1,9 @@
 import { Camera, renderPixel } from "../camera";
+import { LambertianMaterial, Material } from "../material";
 import { BvhNode } from "../object/bvh";
 import { HittableList } from "../object/hittable-list";
 import { linearToSRGB } from "../utils";
-import { BuildScene_res, EventKey, Message, RenderPixels_res } from "./interface";
+import { BuildScene_req, BuildScene_res, EventKey, Message, RenderPixels_res } from "./interface";
 
 
 let world: HittableList;
@@ -16,11 +17,15 @@ self.onmessage = e => {
             world = HittableList.fromJSON(data.data.world);
             bvh = new BvhNode(world.objects);
             camera = Camera.fromJSON(data.data.camera);
-            self.postMessage({
-                taskId,
-                type: EventKey.回复构建场景,
-                success: true,
-            } as BuildScene_res);
+            Promise.all(load_material(world)).then(() => {
+                self.postMessage({
+                    taskId,
+                    type: EventKey.回复构建场景,
+                    success: true,
+                } as BuildScene_res);
+            }).catch(e => {
+                throw e;
+            });
         } catch (e) {
             self.postMessage({
                 taskId,
@@ -60,4 +65,13 @@ self.onmessage = e => {
             } as RenderPixels_res);
         }
     }
+}
+
+function load_material(world: HittableList) {
+    return world.objects.map(obj => {
+        if ('material' in obj) {
+            const mat = obj.material as Material;
+            return mat instanceof LambertianMaterial ? mat.load() : null;
+        }
+    });
 }

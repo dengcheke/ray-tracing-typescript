@@ -81,3 +81,26 @@ export enum AXIS {
     Y = 1,
     Z = 2
 }
+
+export function resolve_image_url(url: string) {
+    return new URL(url, location.href).href;
+}
+
+export async function load_image(url: string) {
+    return new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.src = url;
+        img.onload = () => resolve(img);
+        img.onerror = (e) => reject(e);
+    });
+}
+
+export async function load_imagebitmap(url: string) {
+    return new Promise<ImageBitmap>((resolve, reject) => {
+        fetch(url)
+            .then(res => res.blob())
+            .then(blob => createImageBitmap(blob))
+            .then(imagebitmap => resolve(imagebitmap))
+            .catch(reject)
+    });
+}

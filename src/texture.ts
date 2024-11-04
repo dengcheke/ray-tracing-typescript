@@ -1,3 +1,5 @@
+import { clamp } from "lodash-es";
+import { RtwImage } from "./rtw-image";
 import { assertEqual } from "./utils";
 import { Color, Vector3 } from "./vec3";
 
@@ -80,6 +82,44 @@ export class CheckerTexture implements Texture {
     }
 }
 
+export class ImageTexture implements Texture {
+    static type = '_ImageTexture';
+    private image: RtwImage;
+
+    src: string;
+    constructor(src: string) {
+        this.src = src;
+        this.image = new RtwImage(src);
+    }
+
+    load() {
+        return this.image.load();
+    }
+
+    value(u: number, v: number, point: Vector3): Color {
+        // If we have no texture data, then return solid cyan as a debugging aid.
+        if (!this.image.loaded) return new Color(0, 1, 1);
+        u = clamp(u, 0, 1);
+        v = 1.0 - clamp(v, 0, 1); // Flip V to image coordinates
+        const i = u * this.image.width >> 0;
+        const j = v * this.image.height >> 0;
+        const pixel = this.image.pixel_data(i, j);
+        return new Color(pixel[0] / 255, pixel[1] / 255, pixel[2] / 255);
+    }
+
+    toJSON() {
+        return {
+            type: ImageTexture.type,
+            src: this.src,
+        }
+    }
+
+    static fromJSON(opts: ReturnType<ImageTexture['toJSON']>) {
+        assertEqual(opts.type, ImageTexture.type);
+        return new ImageTexture(opts.src);
+    }
+}
+
 export function textureFromJSON(opts: any) {
     switch (opts.type) {
         case Color.type:
@@ -88,6 +128,8 @@ export function textureFromJSON(opts: any) {
             return SolidColorTexture.fromJSON(opts);
         case CheckerTexture.type:
             return CheckerTexture.fromJSON(opts);
+        case ImageTexture.type:
+            return ImageTexture.fromJSON(opts);
         default:
             throw new Error("无效的texture类型:" + opts.type);
     }

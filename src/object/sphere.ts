@@ -30,10 +30,26 @@ export class Sphere implements Hittable {
             this.radius = radius;
             this.material = material;
         }
-        this.updateBbox();
+        this.update_bbox();
     }
 
-    private updateBbox() {
+    static get_sphere_uv(p: Vector3) {
+        // p: a given point on the sphere of radius one, centered at the origin.
+        // u: returned value [0,1] of angle around the Y axis from X=-1.
+        // v: returned value [0,1] of angle from Y=-1 to Y=+1.
+        //     <1 0 0> yields <0.50 0.50>       <-1  0  0> yields <0.00 0.50>
+        //     <0 1 0> yields <0.50 1.00>       < 0 -1  0> yields <0.50 0.00>
+        //     <0 0 1> yields <0.25 0.50>       < 0  0 -1> yields <0.75 0.50>
+        const { x, y, z } = p;
+        const theta = Math.acos(-y);
+        const phi = Math.atan2(-z, x) + Math.PI;
+        return [
+            phi / (2 * Math.PI),
+            theta / Math.PI
+        ];
+    }
+
+    private update_bbox() {
         const { center, radius } = this;
         const rvec = new Vector3(radius, radius, radius);
         const box1 = new AABB(center.at(0).sub(rvec), center.at(0).add(rvec));
@@ -68,6 +84,9 @@ export class Sphere implements Hittable {
         rec.mat = this.material;
         const outward_normal = rec.p.clone().sub(current_center).divideScalar(this.radius);
         rec.set_face_normal(ray, outward_normal);
+        const uv = Sphere.get_sphere_uv(outward_normal);
+        rec.u = uv[0];
+        rec.v = uv[1];
         return rec;
     }
 
@@ -86,7 +105,7 @@ export class Sphere implements Hittable {
         s.center = Ray.fromJSON(opts.center);
         s.radius = opts.radius;
         s.material = materialFromJSON(opts.material);
-        s.updateBbox();
+        s.update_bbox();
         return s;
     }
 }
