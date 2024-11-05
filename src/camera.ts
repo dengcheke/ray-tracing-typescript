@@ -10,6 +10,7 @@ function resolveDefaults(opts: ConstructorParameters<typeof Camera>[0]) {
     opts.image_width = opts.image_width ?? 100;
     opts.samples_per_pixel = opts.samples_per_pixel ?? 10;
     opts.max_depth = opts.max_depth ?? 10;
+    opts.background = opts.background ?? new Color(0.70, 0.80, 1.00);
 
     opts.vfov = opts.vfov ?? 90;
     opts.lookfrom = opts.lookfrom ?? new Vector3(0, 0, 0);
@@ -18,6 +19,7 @@ function resolveDefaults(opts: ConstructorParameters<typeof Camera>[0]) {
 
     opts.defocus_angle = opts.defocus_angle ?? 0;
     opts.focus_dist = opts.focus_dist ?? 10;
+
 
     return opts;
 }
@@ -37,6 +39,7 @@ export class Camera {
     //
     samples_per_pixel: number; //Count of random samples for each pixel
     max_depth: number; //Maximum number of ray bounces into scene
+    background: Color;
     //
     pixel_delta_u: Vector3;
     pixel_delta_v: Vector3;
@@ -49,6 +52,7 @@ export class Camera {
         image_width: number,
         samples_per_pixel: number,
         max_depth: number,
+        background: Color,
         vfov: number,
         lookfrom: Vector3,
         lookat: Vector3,
@@ -60,11 +64,12 @@ export class Camera {
         const {
             aspect_ratio, image_width, samples_per_pixel, max_depth,
             vfov, lookfrom, lookat, vup,
-            focus_dist, defocus_angle
+            focus_dist, defocus_angle, background
         } = resolveDefaults(opts);
         //
         this.samples_per_pixel = samples_per_pixel;
         this.max_depth = max_depth;
+        this.background = background;
         //
         this.aspect_ratio = aspect_ratio;
         this.image_width = image_width;
@@ -121,6 +126,7 @@ export class Camera {
             //
             samples_per_pixel: this.samples_per_pixel,
             max_depth: this.max_depth,
+            background: this.background.toJSON(),
             //
             pixel_delta_u: this.pixel_delta_u.toJSON(),
             pixel_delta_v: this.pixel_delta_v.toJSON(),
@@ -129,7 +135,7 @@ export class Camera {
             defocus_disk_v: this.defocus_disk_v.toJSON()
         }
     }
-    static fromJSON(opts: any) {
+    static fromJSON(opts: ReturnType<Camera['toJSON']>) {
         assertEqual(opts.type, Camera.type);
         const camera = new Camera();
         camera.aspect_ratio = opts.aspect_ratio;
@@ -145,6 +151,7 @@ export class Camera {
         //
         camera.samples_per_pixel = opts.samples_per_pixel;
         camera.max_depth = opts.max_depth;
+        camera.background = Color.fromJSON(opts.background);
         //
         camera.pixel_delta_u = Vector3.fromJSON(opts.pixel_delta_u);
         camera.pixel_delta_v = Vector3.fromJSON(opts.pixel_delta_v);
@@ -155,22 +162,31 @@ export class Camera {
     }
 }
 
-const c1 = new Color(1, 1, 1);
-const c2 = new Color(0.5, 0.7, 1);
-
-function rayColor(ray: Ray, depth: number, world: Hittable): Color {
+function rayColor(ray: Ray, depth: number, world: Hittable, camera: Camera): Color {
     if (depth <= 0) return new Color(0, 0, 0);
+
     const hit_record = world.hit(ray, new Interval(0.001, Infinity));
-    if (hit_record) {
-        const scattered = hit_record.mat.scatter(ray, hit_record);
-        if (scattered) {
-            return rayColor(scattered.ray_scatter, depth - 1, world)
-                .multiply(scattered.attenuation);
-        }
-        return new Color(0, 0, 0);
-    }
-    const a = 0.5 * (ray.norm_dir.y + 1.0);
-    return new Color().lerpVectors(c1, c2, a);
+    if (!hit_record) return camera.background.clone();
+
+    //用一个新的颜色存储, 避免修改 texture 或者 material 内的color属性值
+    const blend_color = new Color(0, 0, 0);
+
+    const color_from_emission = hit_record.mat.emitted(
+        hit_record.u,
+        hit_record.v,
+        hit_record.p
+    );
+    blend_color.add(color_from_emission);
+
+    const scatter_result = hit_record.mat.scatter(ray, hit_record);
+    if (!scatter_result) return blend_color;
+
+    const color_from_scatter = rayColor(scatter_result.ray_scatter, depth - 1, world, camera)
+        .multiply(scatter_result.attenuation);
+
+    blend_color.add(color_from_scatter);
+
+    return blend_color;
 }
 
 
@@ -195,7 +211,8 @@ export function renderPixel(camera: Camera, scene: Hittable, pixel_x: number, pi
         const sample_color = rayColor(
             new Ray(ray_origin, ray_dir, ray_time),
             max_depth,
-            scene
+            scene,
+            camera
         );
         total_color.add(sample_color);
     }

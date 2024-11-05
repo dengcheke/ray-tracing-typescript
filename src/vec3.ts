@@ -146,4 +146,7 @@ export class Color extends Vector3 {
         assertEqual(opts.type, Color.type);
         return new Color(opts.x, opts.y, opts.z);
     }
+    clone(): Color {
+        return new Color(this.x, this.y, this.z);
+    }
 }

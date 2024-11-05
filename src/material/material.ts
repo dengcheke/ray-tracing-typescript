@@ -1,24 +1,27 @@
 import { HitRecord } from "../object/hittable";
 import { Ray } from "../ray";
-import { ImageTexture, SolidColorTexture, Texture, textureFromJSON } from "./texture";
 import { assertEqual, is_near_zero, random_unit_direction, reflect, reflectance, refract } from "../utils";
-import { Color } from "../vec3";
+import { Color, Vector3 } from "../vec3";
+import { ImageTexture, SolidColorTexture, Texture, textureFromJSON } from "./texture";
 
-export interface Material {
+export abstract class Material {
     scatter(ray_in: Ray, hit_record: HitRecord): false | {
-        ray_scatter: Ray,
-        attenuation: Color
-    };
-    toJSON(): any;
+        ray_scatter: Ray, attenuation: Color
+    } {
+        return false;
+    }
+    abstract toJSON(): any;
+    emitted(u: number, v: number, p: Vector3) {
+        return new Color(0, 0, 0);
+    }
 }
 
-
-
-export class LambertianMaterial implements Material {
+export class LambertianMaterial extends Material {
     static type = '_LambertianMaterial'
     tex: Texture;
 
     constructor(albedo_or_tex: Color | Texture) {
+        super();
         if (albedo_or_tex instanceof Color) {
             this.tex = new SolidColorTexture(albedo_or_tex);
         } else {
@@ -55,9 +58,9 @@ export class LambertianMaterial implements Material {
     }
 }
 
-export class MetalMaterial implements Material {
+export class MetalMaterial extends Material {
     static type = '_MetalMaterial'
-    constructor(public albedo: Color, public fuzz: number) { }
+    constructor(public albedo: Color, public fuzz: number) { super() }
     scatter(ray_in: Ray, hit_record: HitRecord) {
         const reflect_dir = reflect(ray_in.dir, hit_record.normal);
         reflect_dir.normalize()
@@ -82,12 +85,12 @@ export class MetalMaterial implements Material {
 }
 
 
-export class DielectricMaterial implements Material {
+export class DielectricMaterial extends Material {
     static type = '_DielectricMaterial';
     static Attenuation = new Color(1, 1, 1);
     // Refractive index in vacuum or air, or the ratio of the material's refractive index over
     // the refractive index of the enclosing media
-    constructor(public refraction_index: number) { }
+    constructor(public refraction_index: number) { super() }
     scatter(ray_in: Ray, hit_record: HitRecord) {
         const ri = hit_record.front_face ? (1 / this.refraction_index) : this.refraction_index;
         const cos_theta = Math.min(-ray_in.norm_dir.dot(hit_record.normal), 1);
@@ -100,7 +103,7 @@ export class DielectricMaterial implements Material {
             : refract(ray_in.norm_dir, hit_record.normal, ri);
         return {
             ray_scatter: new Ray(hit_record.p, refract_dir, ray_in.tm),
-            attenuation: DielectricMaterial.Attenuation
+            attenuation: DielectricMaterial.Attenuation,
         }
     }
     toJSON() {
@@ -115,6 +118,36 @@ export class DielectricMaterial implements Material {
     }
 }
 
+export class DiffuseLightMaterial extends Material {
+    static type = '_DiffuseLightMaterial';
+    tex: Texture;
+    constructor(tex: Texture)
+    constructor(emit: Color)
+    constructor(emit_or_tex: Color | Texture) {
+        super();
+        if (emit_or_tex instanceof Color) {
+            this.tex = new SolidColorTexture(emit_or_tex);
+        } else {
+            this.tex = emit_or_tex;
+        }
+    }
+   
+    emitted(u: number, v: number, p: Vector3): Color {
+        return this.tex.value(u, v, p);
+    }
+
+    toJSON() {
+        return {
+            type: DiffuseLightMaterial.type,
+            tex: this.tex.toJSON()
+        }
+    }
+    static fromJSON(opts: ReturnType<DiffuseLightMaterial['toJSON']>) {
+        assertEqual(opts.type, DiffuseLightMaterial.type);
+        return new DiffuseLightMaterial(textureFromJSON(opts.tex));
+    }
+}
+
 
 export function materialFromJSON(opts: any) {
     switch (opts.type) {
@@ -124,6 +157,8 @@ export function materialFromJSON(opts: any) {
             return MetalMaterial.fromJSON(opts);
         case DielectricMaterial.type:
             return DielectricMaterial.fromJSON(opts);
+        case DiffuseLightMaterial.type:
+            return DiffuseLightMaterial.fromJSON(opts);
         default:
             throw new Error("错误的material类型:" + opts.type);
     }
