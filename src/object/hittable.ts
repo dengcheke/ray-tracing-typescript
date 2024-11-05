@@ -1,5 +1,5 @@
 import { Interval } from "../interval";
-import { Material } from "../material";
+import { Material } from "../material/material";
 import { Ray } from "../ray";
 import { Vector3 } from "../vec3";
 import { AABB } from "./aabb";

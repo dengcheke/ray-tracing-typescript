@@ -1,5 +1,5 @@
 import { Interval } from "../interval";
-import { Material, materialFromJSON } from "../material";
+import { Material, materialFromJSON } from "../material/material";
 import { Ray } from "../ray";
 import { assertEqual } from "../utils";
 import { Vector3 } from "../vec3";

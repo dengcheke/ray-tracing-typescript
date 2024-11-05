@@ -1,8 +1,8 @@
-import { HitRecord } from "./object/hittable";
-import { Ray } from "./ray";
+import { HitRecord } from "../object/hittable";
+import { Ray } from "../ray";
 import { ImageTexture, SolidColorTexture, Texture, textureFromJSON } from "./texture";
-import { assertEqual, is_near_zero, random_unit_direction, reflect, reflectance, refract } from "./utils";
-import { Color } from "./vec3";
+import { assertEqual, is_near_zero, random_unit_direction, reflect, reflectance, refract } from "../utils";
+import { Color } from "../vec3";
 
 export interface Material {
     scatter(ray_in: Ray, hit_record: HitRecord): false | {

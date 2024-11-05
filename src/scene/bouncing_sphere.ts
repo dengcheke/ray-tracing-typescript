@@ -1,8 +1,8 @@
 import { Camera } from "../camera";
-import { DielectricMaterial, LambertianMaterial, MetalMaterial } from "../material";
+import { DielectricMaterial, LambertianMaterial, MetalMaterial } from "../material/material";
 import { HittableList } from "../object/hittable-list";
 import { Sphere } from "../object/sphere";
-import { CheckerTexture } from "../texture";
+import { CheckerTexture } from "../material/texture";
 import { distance_between, random } from "../utils";
 import { Color, Vector3 } from "../vec3";
 

@@ -1,13 +1,13 @@
 import { clamp } from "lodash-es";
 import { RtwImage } from "./rtw-image";
-import { assertEqual } from "./utils";
-import { Color, Vector3 } from "./vec3";
+import { assertEqual } from "../utils";
+import { Color, Vector3 } from "../vec3";
+import { Perlin } from "../perlin";
 
 export interface Texture {
     value(u: number, v: number, point: Vector3): Color;
     toJSON(): any;
 }
-
 
 export class SolidColorTexture implements Texture {
     static type = '_SolidColorTexture';
@@ -120,6 +120,31 @@ export class ImageTexture implements Texture {
     }
 }
 
+export class NoiseTexture implements Texture {
+    static type = '_NoiseTexture';
+    private noise: Perlin;
+    constructor(seed?: string) {
+        this.noise = new Perlin(seed);
+    }
+
+    value(u: number, v: number, point: Vector3): Color {
+        return new Color(1, 1, 1).multiplyScalar(this.noise.noise(point));
+    }
+
+    toJSON() {
+        return {
+            type: NoiseTexture.type,
+            noise: this.noise.toJSON(),
+        }
+    }
+
+    static fromJSON(opts: ReturnType<NoiseTexture['toJSON']>) {
+        assertEqual(opts.type, NoiseTexture.type);
+        return new NoiseTexture(opts.noise.seed);
+    }
+}
+
+
 export function textureFromJSON(opts: any) {
     switch (opts.type) {
         case Color.type:
@@ -130,6 +155,8 @@ export function textureFromJSON(opts: any) {
             return CheckerTexture.fromJSON(opts);
         case ImageTexture.type:
             return ImageTexture.fromJSON(opts);
+        case NoiseTexture.type:
+            return NoiseTexture.fromJSON(opts);
         default:
             throw new Error("无效的texture类型:" + opts.type);
     }

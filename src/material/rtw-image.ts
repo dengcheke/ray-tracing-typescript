@@ -1,5 +1,5 @@
 import { clamp } from "lodash-es";
-import { load_imagebitmap } from "./utils";
+import { load_imagebitmap } from "../utils";
 const isWorker = typeof importScripts !== 'undefined';
 const canvas = isWorker ? new OffscreenCanvas(1, 1)
     : document.createElement('canvas');

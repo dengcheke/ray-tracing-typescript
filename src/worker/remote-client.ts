@@ -1,5 +1,5 @@
 import { Camera, renderPixel } from "../camera";
-import { LambertianMaterial, Material } from "../material";
+import { LambertianMaterial, Material } from "../material/material";
 import { BvhNode } from "../object/bvh";
 import { HittableList } from "../object/hittable-list";
 import { linearToSRGB } from "../utils";

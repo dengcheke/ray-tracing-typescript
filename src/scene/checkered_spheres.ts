@@ -1,8 +1,8 @@
 import { Camera } from "../camera";
-import { LambertianMaterial } from "../material";
+import { LambertianMaterial } from "../material/material";
 import { HittableList } from "../object/hittable-list";
 import { Sphere } from "../object/sphere";
-import { CheckerTexture } from "../texture";
+import { CheckerTexture } from "../material/texture";
 import { Color, Vector3 } from "../vec3";
 
 export function scene_checkered_spheres() {

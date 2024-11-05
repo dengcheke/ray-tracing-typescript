@@ -10,12 +10,14 @@
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.12",
+    "@types/seedrandom": "^3.0.8",
     "typescript": "^5.5.3",
     "vite": "^5.4.8"
   },
   "dependencies": {
     "lil-gui": "^0.19.2",
     "lodash-es": "^4.17.21",
+    "seedrandom": "^3.0.5",
     "vue": "^3.5.12"
   }
 }
