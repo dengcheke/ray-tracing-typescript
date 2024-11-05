@@ -8,7 +8,7 @@ export class Perlin {
 
     seed: string;
     private prng: seedrandom.PRNG;
-    private randfloat: number[];
+    private randvec: Vector3[];
     private perm_x: number[];
     private perm_y: number[];
     private perm_z: number[];
@@ -16,9 +16,13 @@ export class Perlin {
     constructor(seed: string) {
         this.seed = seed;
         this.prng = seedrandom(seed);
-        this.randfloat = [];
+        this.randvec = [];
         for (let i = 0; i < Perlin.point_count; i++) {
-            this.randfloat[i] = this.random();
+            this.randvec[i] = new Vector3(
+                this.random(-1, 1),
+                this.random(-1, 1),
+                this.random(-1, 1),
+            ).normalize();
         }
         this.perm_x = this.perlin_generate_perm();
         this.perm_y = this.perlin_generate_perm();
@@ -26,20 +30,20 @@ export class Perlin {
     }
 
     noise(p: Vector3) {
-        const u = Perlin.hermite_cubic_interp(fract(p.x));
-        const v = Perlin.hermite_cubic_interp(fract(p.y));
-        const w = Perlin.hermite_cubic_interp(fract(p.z));
+        const u = fract(p.x);
+        const v = fract(p.y);
+        const w = fract(p.z);
 
         const i = Math.floor(p.x);
         const j = Math.floor(p.y);
         const k = Math.floor(p.z);
 
-        const c = [[[], []], [[], []]] as number[][][];
+        const c = [[[], []], [[], []]] as Vector3[][][];
 
         for (let di = 0; di < 2; di++)
             for (let dj = 0; dj < 2; dj++)
                 for (let dk = 0; dk < 2; dk++)
-                    c[di][dj][dk] = this.randfloat[
+                    c[di][dj][dk] = this.randvec[
                         this.perm_x[(i + di) & 255] ^
                         this.perm_y[(j + dj) & 255] ^
                         this.perm_z[(k + dk) & 255]
@@ -51,15 +55,22 @@ export class Perlin {
         //return t * t * t * (6 * t * t - 15 * t + 10);
         return t * t * (3 - 2 * t);
     }
-    static trilinear_interp(c: number[][][], u: number, v: number, w: number) {
+    static trilinear_interp(c: Vector3[][][], u: number, v: number, w: number) {
+        const uu = Perlin.hermite_cubic_interp(u);
+        const vv = Perlin.hermite_cubic_interp(v);
+        const ww = Perlin.hermite_cubic_interp(w);
         let accum = 0;
+        const weight_v = new Vector3();
         for (let i = 0; i < 2; i++)
             for (let j = 0; j < 2; j++)
-                for (let k = 0; k < 2; k++)
-                    accum += (i * u + (1 - i) * (1 - u))
-                        * (j * v + (1 - j) * (1 - v))
-                        * (k * w + (1 - k) * (1 - w))
-                        * c[i][j][k];
+                for (let k = 0; k < 2; k++) {
+                    weight_v.set(u - i, v - j, w - k);
+                    accum += (i * uu + (1 - i) * (1 - uu))
+                        * (j * vv + (1 - j) * (1 - vv))
+                        * (k * ww + (1 - k) * (1 - ww))
+                        * weight_v.dot(c[i][j][k]);
+                }
+
 
         return accum;
     }
