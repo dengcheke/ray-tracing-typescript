@@ -91,3 +91,32 @@ export class Quad implements Hittable {
         );
     }
 }
+
+export function create_box(a: Vector3, b: Vector3, mat: Material) {
+    const min = new Vector3(
+        Math.min(a.x, b.x),
+        Math.min(a.y, b.y),
+        Math.min(a.z, b.z),
+    );
+    const max = new Vector3(
+        Math.max(a.x, b.x),
+        Math.max(a.y, b.y),
+        Math.max(a.z, b.z),
+    );
+
+    const dx = new Vector3(max.x - min.x, 0, 0);
+    const dy = new Vector3(0, max.y - min.y, 0);
+    const dz = new Vector3(0, 0, max.z - min.z);
+
+    const ndx = dx.clone().multiplyScalar(-1);
+    const ndz = dz.clone().multiplyScalar(-1);
+
+    return [
+        new Quad(new Vector3(min.x, min.y, max.z), dx, dy, mat),//front
+        new Quad(new Vector3(max.x, min.y, max.z), ndz, dy, mat),//right
+        new Quad(new Vector3(max.x, min.y, min.z), ndx, dy, mat),//back
+        new Quad(new Vector3(min.x, min.y, min.z), dz, dy, mat),//left
+        new Quad(new Vector3(min.x, max.y, max.z), dx, ndz, mat),//top
+        new Quad(new Vector3(min.x, min.y, min.z), dx, dz, mat),//bottom
+    ]
+}

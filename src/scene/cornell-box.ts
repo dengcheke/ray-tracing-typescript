@@ -1,7 +1,7 @@
 import { Camera } from "../camera";
 import { DiffuseLightMaterial, LambertianMaterial } from "../material/material";
 import { HittableList } from "../object/hittable-list";
-import { Quad } from "../object/quad";
+import { create_box, Quad } from "../object/quad";
 import { Color, Vector3 } from "../vec3";
 
 export function scene_cornell_box() {
@@ -22,6 +22,13 @@ export function scene_cornell_box() {
         { Q: new Vector3(0, 0, 555), u: new Vector3(555, 0, 0), v: new Vector3(0, 555, 0), mat: white },
     ].forEach(({ Q, u, v, mat }) => {
         world.add(new Quad(Q, u, v, mat));
+    });
+
+    [
+        ...create_box(new Vector3(130, 0, 65), new Vector3(295, 165, 230), white),
+        ...create_box(new Vector3(265, 0, 295), new Vector3(430, 330, 460), white)
+    ].forEach(side => {
+        world.add(side)
     });
 
     const camera = new Camera({
