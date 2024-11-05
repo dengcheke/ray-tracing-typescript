@@ -4,6 +4,7 @@ import { assertEqual } from "../utils";
 import { HitRecord, Hittable } from "./hittable";
 import { Interval } from "../interval";
 import { AABB } from "./aabb";
+import { Quad } from "./quad";
 
 export class HittableList implements Hittable {
     static type = '_HittableList';
@@ -51,8 +52,19 @@ export class HittableList implements Hittable {
         assertEqual(opts.type, HittableList.type);
         const list = new HittableList();
         opts.objects.forEach((o: any) => {
-            list.add(Sphere.fromJSON(o));
+            list.add(objFromJson(o));
         });
         return list;
+    }
+}
+
+
+export function objFromJson(opts: any) {
+    switch (opts.type) {
+        case Sphere.type: return Sphere.fromJSON(opts);
+        case Quad.type: return Quad.fromJSON(opts);
+        default: {
+            throw new Error('无效的object类型:' + opts.type);
+        }
     }
 }

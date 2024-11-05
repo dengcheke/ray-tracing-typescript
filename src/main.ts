@@ -6,6 +6,7 @@ import { scene_bouncing_shperes } from "./scene/bouncing_sphere";
 import { scene_checkered_spheres } from "./scene/checkered_spheres";
 import { scene_earth } from "./scene/earth";
 import { scene_perlin_spheres } from "./scene/perlin_sphere";
+import { scene_quads } from "./scene/quads";
 type Client = ReturnType<typeof initWorker> & { _busy?: boolean };
 const workers = [] as Client[];
 const workerNum = Math.max(navigator.hardwareConcurrency / 2, 1);
@@ -15,7 +16,8 @@ for (let i = 0; i < workerNum; i++) {
 }
 
 function getScene() {
-    return scene_perlin_spheres();
+    return scene_quads();
+    //return scene_perlin_spheres();
     //return scene_earth();
     //return scene_checkered_spheres();
     //return scene_bouncing_shperes();

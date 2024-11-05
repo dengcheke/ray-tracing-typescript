@@ -38,8 +38,15 @@ export class AABB {
             this.y = new Interval(b0.y, b1.y);
             this.z = new Interval(b0.z, b1.z);
         }
+        this.pad_to_minimums();
     }
-
+    static delta = 0.0001;
+    private pad_to_minimums() {
+        // Adjust the AABB so that no side is narrower than some delta, padding if necessary
+        if (this.x.size() < AABB.delta) this.x.expand(AABB.delta);
+        if (this.y.size() < AABB.delta) this.y.expand(AABB.delta);
+        if (this.z.size() < AABB.delta) this.z.expand(AABB.delta);
+    }
     get_axis_interval(n: number) {
         if (n === AXIS.Y) return this.y;
         if (n === AXIS.Z) return this.z;
