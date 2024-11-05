@@ -51,6 +51,21 @@ export class Perlin {
 
         return Perlin.trilinear_interp(c, u, v, w);
     }
+
+    turb(p: Vector3, depth: number) {
+        let accum = 0;
+        const temp_p = p.clone();
+        let weight = 1;
+
+        for (let i = 0; i < depth; i++) {
+            accum += weight * this.noise(temp_p);
+            weight *= 0.5;
+            temp_p.multiplyScalar(2);
+        }
+        return Math.abs(accum);
+    }
+
+
     static hermite_cubic_interp(t: number) {
         //return t * t * t * (6 * t * t - 15 * t + 10);
         return t * t * (3 - 2 * t);
