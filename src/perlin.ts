@@ -26,9 +26,9 @@ export class Perlin {
     }
 
     noise(p: Vector3) {
-        const u = fract(p.x);
-        const v = fract(p.y);
-        const w = fract(p.z);
+        const u = Perlin.hermite_cubic_interp(fract(p.x));
+        const v = Perlin.hermite_cubic_interp(fract(p.y));
+        const w = Perlin.hermite_cubic_interp(fract(p.z));
 
         const i = Math.floor(p.x);
         const j = Math.floor(p.y);
@@ -47,7 +47,10 @@ export class Perlin {
 
         return Perlin.trilinear_interp(c, u, v, w);
     }
-
+    static hermite_cubic_interp(t: number) {
+        //return t * t * t * (6 * t * t - 15 * t + 10);
+        return t * t * (3 - 2 * t);
+    }
     static trilinear_interp(c: number[][][], u: number, v: number, w: number) {
         let accum = 0;
         for (let i = 0; i < 2; i++)
