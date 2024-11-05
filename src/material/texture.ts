@@ -130,9 +130,13 @@ export class NoiseTexture implements Texture {
     }
 
     value(u: number, v: number, point: Vector3): Color {
-        const p = point.clone().multiplyScalar(this.scale);
         return new Color(1, 1, 1)
-            .multiplyScalar(this.noise.turb(p, 7))
+            .multiplyScalar(0.5)
+            .multiplyScalar(
+                1 + Math.sin(
+                    this.scale * point.z + 10 * this.noise.turb(point, 7)
+                )
+            )
     }
 
     toJSON() {
