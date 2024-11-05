@@ -5,6 +5,9 @@ export function assertEqual(s1: any, s2: any, msg?: string) {
 export function lerp(min: number, max: number, t: number) {
     return (max - min) * t + min;
 }
+export function fract(v: number) {
+    return v - Math.floor(v);
+}
 export function random(min?: number, max?: number) {
     if (min === undefined || min === null) {
         return Math.random();
@@ -14,7 +17,7 @@ export function random(min?: number, max?: number) {
 }
 
 export function random_int(min: number, max: number) {
-    return random(min, max + 1) >> 0;
+    return Math.floor(random(min, max + 1));
 }
 
 const epsilon = 1e-6;
@@ -81,6 +84,7 @@ export enum AXIS {
     Y = 1,
     Z = 2
 }
+
 
 export function resolve_image_url(url: string) {
     return new URL(url, location.href).href;

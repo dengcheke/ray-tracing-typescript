@@ -87,7 +87,7 @@ function createRenderer() {
         if (curIndex >= allPixelNums) return;
         w._busy = true;
         const start = curIndex;
-        const row_index = start / image_width >> 0;
+        const row_index = Math.floor(start / image_width);
         const max_index = (row_index + 1) * image_width;
         const end = curIndex = Math.min(start + step_forward, max_index);
         const dxdy = [start - row_index * image_width, row_index];

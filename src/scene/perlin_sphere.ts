@@ -7,7 +7,7 @@ import { Vector3 } from "../vec3";
 
 export function scene_perlin_spheres() {
     const world = new HittableList();
-    const pertext = new NoiseTexture(new Date().getTime() + "");
+    const pertext = new NoiseTexture("scene_perlin_spheres");
     world.add(new Sphere(new Vector3(0, -1000, 0), 1000, new LambertianMaterial(pertext)));
     world.add(new Sphere(new Vector3(0, 2, 0), 2, new LambertianMaterial(pertext)));
 

@@ -30,7 +30,7 @@ export class BvhNode implements Hittable {
             this.right = objects[1];
         } else {
             objects.sort(comparator);
-            const mid = len / 2 >> 0;
+            const mid = Math.floor(len / 2);
             this.left = new BvhNode(objects.slice(0, mid));
             this.right = new BvhNode(objects.slice(mid));
         }

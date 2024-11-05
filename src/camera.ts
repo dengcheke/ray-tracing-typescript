@@ -68,7 +68,7 @@ export class Camera {
         //
         this.aspect_ratio = aspect_ratio;
         this.image_width = image_width;
-        const image_height = this.image_height = image_width / aspect_ratio >> 0;
+        const image_height = this.image_height = Math.floor(image_width / aspect_ratio);
         //
         this.lookfrom = lookfrom;
         this.lookat = lookat;

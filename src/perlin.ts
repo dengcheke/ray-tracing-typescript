@@ -1,6 +1,6 @@
 import seedrandom from "seedrandom";
 import { Vector3 } from "./vec3";
-import { assertEqual } from "./utils";
+import { assertEqual, fract } from "./utils";
 
 export class Perlin {
     static type = "_Perlin";
@@ -13,8 +13,8 @@ export class Perlin {
     private perm_y: number[];
     private perm_z: number[];
 
-    constructor(seed?: string) {
-        this.seed = seed || (new Date().getTime() + '');
+    constructor(seed: string) {
+        this.seed = seed;
         this.prng = seedrandom(seed);
         this.randfloat = [];
         for (let i = 0; i < Perlin.point_count; i++) {
@@ -26,12 +26,39 @@ export class Perlin {
     }
 
     noise(p: Vector3) {
-        const i = (4 * p.x >> 0) & 255;
-        const j = (4 * p.y >> 0) & 255;
-        const k = (4 * p.z >> 0) & 255;
-        return this.randfloat[
-            this.perm_x[i] ^ this.perm_y[j] ^ this.perm_z[k]
-        ];
+        const u = fract(p.x);
+        const v = fract(p.y);
+        const w = fract(p.z);
+
+        const i = Math.floor(p.x);
+        const j = Math.floor(p.y);
+        const k = Math.floor(p.z);
+
+        const c = [[[], []], [[], []]] as number[][][];
+
+        for (let di = 0; di < 2; di++)
+            for (let dj = 0; dj < 2; dj++)
+                for (let dk = 0; dk < 2; dk++)
+                    c[di][dj][dk] = this.randfloat[
+                        this.perm_x[(i + di) & 255] ^
+                        this.perm_y[(j + dj) & 255] ^
+                        this.perm_z[(k + dk) & 255]
+                    ];
+
+        return Perlin.trilinear_interp(c, u, v, w);
+    }
+
+    static trilinear_interp(c: number[][][], u: number, v: number, w: number) {
+        let accum = 0;
+        for (let i = 0; i < 2; i++)
+            for (let j = 0; j < 2; j++)
+                for (let k = 0; k < 2; k++)
+                    accum += (i * u + (1 - i) * (1 - u))
+                        * (j * v + (1 - j) * (1 - v))
+                        * (k * w + (1 - k) * (1 - w))
+                        * c[i][j][k];
+
+        return accum;
     }
 
     toJSON() {
@@ -51,7 +78,7 @@ export class Perlin {
     }
 
     private random_int(min: number, max: number) {
-        return this.random(min, max + 1) >> 0;
+        return Math.floor(this.random(min, max + 1));
     }
 
     private perlin_generate_perm() {

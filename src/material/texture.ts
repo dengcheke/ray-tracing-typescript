@@ -57,9 +57,9 @@ export class CheckerTexture implements Texture {
         }
     }
     value(u: number, v: number, point: Vector3): Color {
-        const x_int = this.inv_scale * point.x >> 0;
-        const y_int = this.inv_scale * point.y >> 0;
-        const z_int = this.inv_scale * point.z >> 0;
+        const x_int = Math.floor(this.inv_scale * point.x);
+        const y_int = Math.floor(this.inv_scale * point.y);
+        const z_int = Math.floor(this.inv_scale * point.z);
         const isEven = (x_int + y_int + z_int) % 2 === 0;
         return isEven ? this.even.value(u, v, point) : this.odd.value(u, v, point);
     }
@@ -101,8 +101,8 @@ export class ImageTexture implements Texture {
         if (!this.image.loaded) return new Color(0, 1, 1);
         u = clamp(u, 0, 1);
         v = 1.0 - clamp(v, 0, 1); // Flip V to image coordinates
-        const i = u * this.image.width >> 0;
-        const j = v * this.image.height >> 0;
+        const i = Math.floor(u * this.image.width);
+        const j = Math.floor(v * this.image.height);
         const pixel = this.image.pixel_data(i, j);
         return new Color(pixel[0] / 255, pixel[1] / 255, pixel[2] / 255);
     }

@@ -40,13 +40,13 @@ self.onmessage = e => {
             const len = end - start;
             const result = new Uint8ClampedArray(len * 4);
             for (let index = start; index < end; index++) {
-                const py = index / camera.image_width >> 0;
+                const py = Math.floor(index / camera.image_width);
                 const px = index - py * camera.image_width;
                 const color = renderPixel(camera, bvh, px, py);
                 const data_index = (index - start) * 4;
-                result[data_index] = linearToSRGB(color.r) * 255 >> 0;
-                result[data_index + 1] = linearToSRGB(color.g) * 255 >> 0;
-                result[data_index + 2] = linearToSRGB(color.b) * 255 >> 0;
+                result[data_index] = Math.floor(linearToSRGB(color.r) * 255);
+                result[data_index + 1] = Math.floor(linearToSRGB(color.g) * 255);
+                result[data_index + 2] = Math.floor(linearToSRGB(color.b) * 255);
                 result[data_index + 3] = 255;
             }
             self.postMessage({
