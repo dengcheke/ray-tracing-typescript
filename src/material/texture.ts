@@ -123,24 +123,28 @@ export class ImageTexture implements Texture {
 export class NoiseTexture implements Texture {
     static type = '_NoiseTexture';
     private noise: Perlin;
-    constructor(seed?: string) {
-        this.noise = new Perlin(seed);
+    private scale: number;
+    constructor(scale: number) {
+        this.scale = scale;
+        this.noise = new Perlin("perlin-noise-seed");
     }
 
     value(u: number, v: number, point: Vector3): Color {
-        return new Color(1, 1, 1).multiplyScalar(this.noise.noise(point));
+        const p = point.clone().multiplyScalar(this.scale);
+        return new Color(1, 1, 1).multiplyScalar(this.noise.noise(p));
     }
 
     toJSON() {
         return {
             type: NoiseTexture.type,
             noise: this.noise.toJSON(),
+            scale: this.scale,
         }
     }
 
     static fromJSON(opts: ReturnType<NoiseTexture['toJSON']>) {
         assertEqual(opts.type, NoiseTexture.type);
-        return new NoiseTexture(opts.noise.seed);
+        return new NoiseTexture(opts.scale);
     }
 }
 
