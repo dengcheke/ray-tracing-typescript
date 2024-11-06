@@ -1,11 +1,11 @@
 import { Interval } from "./interval";
 import { Hittable } from "./object/hittable";
 import { Ray } from "./ray";
-import { assertEqual, deg_to_rad, random_in_unit_disk } from "./utils";
+import { assertEqual, deg_to_rad, random, random_in_unit_disk } from "./utils";
 import { Color, Vector3 } from "./vec3";
 
 
-function resolveDefaults(opts: ConstructorParameters<typeof Camera>[0]) {
+function resolveDefaults(opts: CameraOptions) {
     opts.aspect_ratio = opts.aspect_ratio ?? 1;
     opts.image_width = opts.image_width ?? 100;
     opts.samples_per_pixel = opts.samples_per_pixel ?? 10;
@@ -20,16 +20,29 @@ function resolveDefaults(opts: ConstructorParameters<typeof Camera>[0]) {
     opts.defocus_angle = opts.defocus_angle ?? 0;
     opts.focus_dist = opts.focus_dist ?? 10;
 
-
     return opts;
 }
-
+export type CameraOptions = {
+    aspect_ratio: number,
+    image_width: number,
+    samples_per_pixel: number,
+    max_depth: number,
+    background: Color,
+    vfov: number,
+    lookfrom: Vector3,
+    lookat: Vector3,
+    vup: Vector3,
+    focus_dist: number,
+    defocus_angle: number,
+}
 export class Camera {
     static type = "_Camera";
+    //config
     aspect_ratio: number;
     image_width: number;
     image_height: number;
     //
+    vfov: number;
     center: Vector3;
     lookfrom: Vector3;
     lookat: Vector3;
@@ -40,39 +53,35 @@ export class Camera {
     samples_per_pixel: number; //Count of random samples for each pixel
     max_depth: number; //Maximum number of ray bounces into scene
     background: Color;
-    //
+
+
+    //计算得到
+    pixel_samples_scale: number;//Color scale factor for a sum of pixel samples
+    sqrt_spp: number;//Square root of number of samples per pixel
+    recip_sqrt_spp: number;//1 / sqrt_spp
     pixel_delta_u: Vector3;
     pixel_delta_v: Vector3;
     pixel00_loc: Vector3;
     defocus_disk_u: Vector3;
     defocus_disk_v: Vector3;
 
-    constructor(opts?: Partial<{
-        aspect_ratio: number,
-        image_width: number,
-        samples_per_pixel: number,
-        max_depth: number,
-        background: Color,
-        vfov: number,
-        lookfrom: Vector3,
-        lookat: Vector3,
-        vup: Vector3,
-        focus_dist: number,
-        defocus_angle: number,
-    }>) {
-        if (!opts) return;
+    constructor(opts: Partial<CameraOptions>) {
         const {
             aspect_ratio, image_width, samples_per_pixel, max_depth,
             vfov, lookfrom, lookat, vup,
             focus_dist, defocus_angle, background
-        } = resolveDefaults(opts);
+        } = resolveDefaults((opts || {}) as CameraOptions);
         //
         this.samples_per_pixel = samples_per_pixel;
+        this.sqrt_spp = Math.floor(samples_per_pixel ** 0.5);
+        this.pixel_samples_scale = 1 / this.sqrt_spp ** 2;
+        this.recip_sqrt_spp = 1 / this.sqrt_spp;
         this.max_depth = max_depth;
         this.background = background;
         //
         this.aspect_ratio = aspect_ratio;
         this.image_width = image_width;
+        this.vfov = vfov;
         const image_height = this.image_height = Math.floor(image_width / aspect_ratio);
         //
         this.lookfrom = lookfrom;
@@ -115,49 +124,26 @@ export class Camera {
             type: Camera.type,
             aspect_ratio: this.aspect_ratio,
             image_width: this.image_width,
-            image_height: this.image_height,
-            //
-            center: this.center.toJSON(),
+            samples_per_pixel: this.samples_per_pixel,
+            max_depth: this.max_depth,
+            background: this.background.toJSON(),
+            vfov: this.vfov,
             lookfrom: this.lookfrom.toJSON(),
             lookat: this.lookat.toJSON(),
             vup: this.vup.toJSON(),
             focus_dist: this.focus_dist,
             defocus_angle: this.defocus_angle,
-            //
-            samples_per_pixel: this.samples_per_pixel,
-            max_depth: this.max_depth,
-            background: this.background.toJSON(),
-            //
-            pixel_delta_u: this.pixel_delta_u.toJSON(),
-            pixel_delta_v: this.pixel_delta_v.toJSON(),
-            pixel00_loc: this.pixel00_loc.toJSON(),
-            defocus_disk_u: this.defocus_disk_u.toJSON(),
-            defocus_disk_v: this.defocus_disk_v.toJSON()
         }
     }
     static fromJSON(opts: ReturnType<Camera['toJSON']>) {
         assertEqual(opts.type, Camera.type);
-        const camera = new Camera();
-        camera.aspect_ratio = opts.aspect_ratio;
-        camera.image_width = opts.image_width;
-        camera.image_height = opts.image_height;
-        //
-        camera.center = Vector3.fromJSON(opts.center);
-        camera.lookfrom = Vector3.fromJSON(opts.lookfrom);
-        camera.lookat = Vector3.fromJSON(opts.lookat);
-        camera.vup = Vector3.fromJSON(opts.vup);
-        camera.focus_dist = opts.focus_dist;
-        camera.defocus_angle = opts.defocus_angle;
-        //
-        camera.samples_per_pixel = opts.samples_per_pixel;
-        camera.max_depth = opts.max_depth;
-        camera.background = Color.fromJSON(opts.background);
-        //
-        camera.pixel_delta_u = Vector3.fromJSON(opts.pixel_delta_u);
-        camera.pixel_delta_v = Vector3.fromJSON(opts.pixel_delta_v);
-        camera.pixel00_loc = Vector3.fromJSON(opts.pixel00_loc);
-        camera.defocus_disk_u = Vector3.fromJSON(opts.defocus_disk_u);
-        camera.defocus_disk_v = Vector3.fromJSON(opts.defocus_disk_v);
+        const camera = new Camera({
+            ...opts,
+            background: Color.fromJSON(opts.background),
+            lookfrom: Vector3.fromJSON(opts.lookfrom),
+            lookat: Vector3.fromJSON(opts.lookat),
+            vup: Vector3.fromJSON(opts.vup)
+        });
         return camera;
     }
 }
@@ -193,30 +179,46 @@ function rayColor(ray: Ray, depth: number, world: Hittable, camera: Camera): Col
 export function renderPixel(camera: Camera, scene: Hittable, pixel_x: number, pixel_y: number) {
     const { max_depth, defocus_angle,
         pixel00_loc, pixel_delta_u, pixel_delta_v,
-        center, samples_per_pixel,
+        center, sqrt_spp,
+        recip_sqrt_spp, pixel_samples_scale,
         defocus_disk_u, defocus_disk_v
     } = camera;
     const total_color = new Color(0, 0, 0);
-    for (let i = 0; i < samples_per_pixel; i++) {
-        //sample_square
-        const offset_x = Math.random() - 0.5;
-        const offset_y = Math.random() - 0.5;
+
+    for (let s_j = 0; s_j < sqrt_spp; s_j++) {
+        for (let s_i = 0; s_i < sqrt_spp; s_i++) {
+            const ray = get_ray(pixel_x, pixel_y, s_i, s_j);
+            const sample_color = rayColor(ray, max_depth, scene, camera);
+            total_color.addScaledVector(sample_color, pixel_samples_scale);
+        }
+    }
+
+    return total_color; ///颜色平均
+
+    function get_ray(i: number, j: number, s_i: number, s_j: number) {
+        // Construct a camera ray originating from the defocus disk and directed at a randomly
+        // sampled point around the pixel location i, j for stratified sample square s_i, s_j.
+        const offset = sample_square_stratified(s_i, s_j);
         const pixel_sample = pixel00_loc.clone()
-            .addScaledVector(pixel_delta_u, pixel_x + offset_x)
-            .addScaledVector(pixel_delta_v, pixel_y + offset_y);
+            .addScaledVector(pixel_delta_u, i + offset.x)
+            .addScaledVector(pixel_delta_v, j + offset.y);
 
         const ray_origin = defocus_angle <= 0 ? center : defocus_disk_sample();
         const ray_dir = pixel_sample.sub(ray_origin);
         const ray_time = Math.random();
-        const sample_color = rayColor(
-            new Ray(ray_origin, ray_dir, ray_time),
-            max_depth,
-            scene,
-            camera
-        );
-        total_color.add(sample_color);
+        return new Ray(ray_origin, ray_dir, ray_time);
     }
-    return total_color.divideScalar(samples_per_pixel); ///颜色平均
+
+    function sample_square_stratified(s_i: number, s_j: number) {
+        // Returns the vector to a random point in the square sub-pixel specified by grid
+        // indices s_i and s_j, for an idealized unit square pixel [-.5,-.5] to [+.5,+.5].
+      
+        const px = ((s_i + random()) * recip_sqrt_spp) - 0.5;
+        const py = ((s_j + random()) * recip_sqrt_spp) - 0.5;
+
+        return new Vector3(px, py, 0);
+
+    }
 
     function defocus_disk_sample() {
         const p = random_in_unit_disk();

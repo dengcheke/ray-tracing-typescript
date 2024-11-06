@@ -1,16 +1,13 @@
 import { ref, watch } from "vue";
 import { initWorker } from "./worker/initial";
 
+import { Camera } from "./camera";
+import { DiffuseLightMaterial, LambertianMaterial } from "./material/material";
+import { Rotate_Y, Translate } from "./object/hittable";
+import { HittableList } from "./object/hittable-list";
+import { create_box, Quad } from "./object/quad";
+import { Color, Vector3 } from "./vec3";
 import CustomWorker from './worker/remote-client?worker';
-import { scene_bouncing_shperes } from "./scene/bouncing_sphere";
-import { scene_checkered_spheres } from "./scene/checkered_spheres";
-import { scene_earth } from "./scene/earth";
-import { scene_perlin_spheres } from "./scene/perlin_sphere";
-import { scene_quads } from "./scene/quads";
-import { scene_simple_light } from "./scene/simple-light";
-import { scene_cornell_box } from "./scene/cornell-box";
-import { scene_cornell_smoke } from "./scene/cornell-smoke";
-import { scene_final } from "./scene/final";
 type Client = ReturnType<typeof initWorker> & { _busy?: boolean };
 const workers = [] as Client[];
 const workerNum = Math.max(navigator.hardwareConcurrency / 2, 1);
@@ -20,19 +17,51 @@ for (let i = 0; i < workerNum; i++) {
 }
 
 function getScene() {
-    const n = 11 as number;
-    switch (n) {
-        case 1: return scene_bouncing_shperes();
-        case 2: return scene_checkered_spheres();
-        case 3: return scene_earth();
-        case 4: return scene_perlin_spheres();
-        case 5: return scene_quads();
-        case 6: return scene_simple_light();
-        case 7: return scene_cornell_box();
-        case 8: return scene_cornell_smoke();
-        case 9: return scene_final(800, 10000, 40);
-        default: return scene_final(400, 100, 4);
-    }
+    const world = new HittableList();
+
+    const red = new LambertianMaterial(new Color(0.65, 0.05, 0.05));
+    const white = new LambertianMaterial(new Color(0.73, 0.73, 0.73));
+    const green = new LambertianMaterial(new Color(0.12, 0.45, 0.15));
+
+    const light = new DiffuseLightMaterial(new Color(15, 15, 15));
+
+    [
+        { Q: new Vector3(555, 0, 0), u: new Vector3(0, 0, 555), v: new Vector3(0, 555, 0), mat: green },
+        { Q: new Vector3(0, 0, 555), u: new Vector3(0, 0, -555), v: new Vector3(0, 555, 0), mat: red },
+        { Q: new Vector3(0, 555, 0), u: new Vector3(555, 0, 0), v: new Vector3(0, 0, 555), mat: white },
+        { Q: new Vector3(0, 0, 555), u: new Vector3(555, 0, 0), v: new Vector3(0, 0, -555), mat: white },
+        { Q: new Vector3(555, 0, 555), u: new Vector3(-555, 0, 0), v: new Vector3(0, 555, 0), mat: white },
+        { Q: new Vector3(213, 554, 227), u: new Vector3(130, 0, 0), v: new Vector3(0, 0, 105), mat: light },
+    ].forEach(({ Q, u, v, mat }) => {
+        world.add(new Quad(Q, u, v, mat));
+    });
+
+
+    const box1 = create_box(new Vector3(0, 0, 0), new Vector3(165, 330, 165), white);
+    world.add(new Translate(
+        new Rotate_Y(box1, 15),
+        new Vector3(265, 0, 295),
+    ));
+
+    const box2 = create_box(new Vector3(0, 0, 0), new Vector3(165, 165, 165), white);
+    world.add(new Translate(
+        new Rotate_Y(box2, -18),
+        new Vector3(130, 0, 65),
+    ));
+
+    const camera = new Camera({
+        aspect_ratio: 1,
+        image_width: 600,
+        samples_per_pixel: 64,
+        max_depth: 50,
+        background: new Color(0, 0, 0),
+        vfov: 40,
+        lookfrom: new Vector3(278, 278, -800),
+        lookat: new Vector3(278, 278, 0),
+        vup: new Vector3(0, 1, 0),
+        defocus_angle: 0
+    });
+    return { camera, world }
 }
 
 const { world, camera } = getScene();
