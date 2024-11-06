@@ -30,7 +30,6 @@ export class Interval {
         this.max += padding;
         return this;
     }
-
     clamp(x: number) {
         if (x < this.min) return this.min;
         if (x > this.max) return this.max;
@@ -45,6 +44,13 @@ export class Interval {
     surrounds(x: number) {
         return x > this.min && x < this.max;
     }
+
+    add_offset(dis: number) {
+        this.min += dis;
+        this.max += dis;
+        return this;
+    }
+
     clone() {
         return new Interval(this.min, this.max);
     }

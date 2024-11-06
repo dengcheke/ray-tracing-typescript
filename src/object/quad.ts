@@ -5,6 +5,7 @@ import { assertEqual } from "../utils";
 import { Vector3 } from "../vec3";
 import { AABB } from "./aabb";
 import { HitRecord, Hittable } from "./hittable";
+import { HittableList } from "./hittable-list";
 
 export class Quad implements Hittable {
     static type = '_Quad';
@@ -93,6 +94,7 @@ export class Quad implements Hittable {
 }
 
 export function create_box(a: Vector3, b: Vector3, mat: Material) {
+    const sides = new HittableList();
     const min = new Vector3(
         Math.min(a.x, b.x),
         Math.min(a.y, b.y),
@@ -111,12 +113,13 @@ export function create_box(a: Vector3, b: Vector3, mat: Material) {
     const ndx = dx.clone().multiplyScalar(-1);
     const ndz = dz.clone().multiplyScalar(-1);
 
-    return [
-        new Quad(new Vector3(min.x, min.y, max.z), dx, dy, mat),//front
-        new Quad(new Vector3(max.x, min.y, max.z), ndz, dy, mat),//right
-        new Quad(new Vector3(max.x, min.y, min.z), ndx, dy, mat),//back
-        new Quad(new Vector3(min.x, min.y, min.z), dz, dy, mat),//left
-        new Quad(new Vector3(min.x, max.y, max.z), dx, ndz, mat),//top
-        new Quad(new Vector3(min.x, min.y, min.z), dx, dz, mat),//bottom
-    ]
+
+    sides.add(new Quad(new Vector3(min.x, min.y, max.z), dx, dy, mat))//front
+    sides.add(new Quad(new Vector3(max.x, min.y, max.z), ndz, dy, mat))//right
+    sides.add(new Quad(new Vector3(max.x, min.y, min.z), ndx, dy, mat))//back
+    sides.add(new Quad(new Vector3(min.x, min.y, min.z), dz, dy, mat))//left
+    sides.add(new Quad(new Vector3(min.x, max.y, max.z), dx, ndz, mat))//top
+    sides.add(new Quad(new Vector3(min.x, min.y, min.z), dx, dz, mat))//bottom
+
+    return sides;
 }

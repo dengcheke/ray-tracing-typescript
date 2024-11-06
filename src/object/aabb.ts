@@ -85,6 +85,12 @@ export class AABB {
             return size_y > size_z ? AXIS.Y : AXIS.Z;
         }
     }
+    add_offset(offset: Vector3) {
+        this.x.add_offset(offset.x);
+        this.y.add_offset(offset.y);
+        this.z.add_offset(offset.z);
+        return this;
+    }
     clone() {
         return new AABB(
             this.x.clone(),

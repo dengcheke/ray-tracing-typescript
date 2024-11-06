@@ -1,7 +1,7 @@
 import { Sphere } from "./sphere";
 import { Ray } from "../ray";
 import { assertEqual } from "../utils";
-import { HitRecord, Hittable } from "./hittable";
+import { HitRecord, Hittable, Rotate_Y, Translate } from "./hittable";
 import { Interval } from "../interval";
 import { AABB } from "./aabb";
 import { Quad } from "./quad";
@@ -59,10 +59,13 @@ export class HittableList implements Hittable {
 }
 
 
-export function objFromJson(opts: any) {
+export function objFromJson(opts: any): Hittable {
     switch (opts.type) {
         case Sphere.type: return Sphere.fromJSON(opts);
         case Quad.type: return Quad.fromJSON(opts);
+        case Translate.type: return Translate.fromJSON(opts);
+        case Rotate_Y.type: return Rotate_Y.fromJSON(opts);
+        case HittableList.type: return HittableList.fromJSON(opts);
         default: {
             throw new Error('无效的object类型:' + opts.type);
         }
