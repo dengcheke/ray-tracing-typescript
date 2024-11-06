@@ -131,7 +131,7 @@ export class DiffuseLightMaterial extends Material {
             this.tex = emit_or_tex;
         }
     }
-   
+
     emitted(u: number, v: number, p: Vector3): Color {
         return this.tex.value(u, v, p);
     }
@@ -148,6 +148,40 @@ export class DiffuseLightMaterial extends Material {
     }
 }
 
+export class IsotropicMaterial extends Material {
+    static type = '_IsotropicMaterial';
+    tex: Texture;
+    constructor(albedo_or_texture: Texture | Color) {
+        super();
+        if (albedo_or_texture instanceof Color) {
+            this.tex = new SolidColorTexture(albedo_or_texture);
+        } else {
+            this.tex = albedo_or_texture;
+        }
+    }
+    scatter(ray_in: Ray, hit_record: HitRecord): false | { ray_scatter: Ray; attenuation: Color; } {
+        return {
+            ray_scatter: new Ray(hit_record.p, random_unit_direction(), ray_in.tm),
+            attenuation: this.tex.value(
+                hit_record.u,
+                hit_record.v,
+                hit_record.p
+            )
+        }
+    }
+    toJSON() {
+        return {
+            type: IsotropicMaterial.type,
+            tex: this.tex.toJSON()
+        }
+    }
+
+    static fromJSON(opts: ReturnType<IsotropicMaterial['toJSON']>) {
+        assertEqual(opts.type, IsotropicMaterial.type);
+        return new IsotropicMaterial(textureFromJSON(opts.tex));
+    }
+}
+
 
 export function materialFromJSON(opts: any) {
     switch (opts.type) {
@@ -159,6 +193,8 @@ export function materialFromJSON(opts: any) {
             return DielectricMaterial.fromJSON(opts);
         case DiffuseLightMaterial.type:
             return DiffuseLightMaterial.fromJSON(opts);
+        case IsotropicMaterial.type:
+            return IsotropicMaterial.fromJSON(opts);
         default:
             throw new Error("错误的material类型:" + opts.type);
     }

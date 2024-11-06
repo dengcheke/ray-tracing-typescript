@@ -9,6 +9,7 @@ import { scene_perlin_spheres } from "./scene/perlin_sphere";
 import { scene_quads } from "./scene/quads";
 import { scene_simple_light } from "./scene/simple-light";
 import { scene_cornell_box } from "./scene/cornell-box";
+import { scene_cornell_smoke } from "./scene/cornell-smoke";
 type Client = ReturnType<typeof initWorker> & { _busy?: boolean };
 const workers = [] as Client[];
 const workerNum = Math.max(navigator.hardwareConcurrency / 2, 1);
@@ -18,7 +19,7 @@ for (let i = 0; i < workerNum; i++) {
 }
 
 function getScene() {
-    const n = 7 as number;
+    const n = 8 as number;
     switch (n) {
         case 1: return scene_bouncing_shperes();
         case 2: return scene_checkered_spheres();
@@ -27,6 +28,7 @@ function getScene() {
         case 5: return scene_quads();
         case 6: return scene_simple_light();
         case 7: return scene_cornell_box();
+        case 8: return scene_cornell_smoke();
     }
 }
 

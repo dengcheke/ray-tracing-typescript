@@ -5,6 +5,7 @@ import { HitRecord, Hittable, Rotate_Y, Translate } from "./hittable";
 import { Interval } from "../interval";
 import { AABB } from "./aabb";
 import { Quad } from "./quad";
+import { ConstantMedium } from "./constant_medium";
 
 export class HittableList implements Hittable {
     static type = '_HittableList';
@@ -66,6 +67,7 @@ export function objFromJson(opts: any): Hittable {
         case Translate.type: return Translate.fromJSON(opts);
         case Rotate_Y.type: return Rotate_Y.fromJSON(opts);
         case HittableList.type: return HittableList.fromJSON(opts);
+        case ConstantMedium.type: return ConstantMedium.fromJSON(opts);
         default: {
             throw new Error('无效的object类型:' + opts.type);
         }
