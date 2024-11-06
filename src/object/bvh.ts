@@ -1,15 +1,19 @@
 import { Interval } from "../interval";
 import { Ray } from "../ray";
-import { AXIS, random_int } from "../utils";
+import { assertEqual, AXIS } from "../utils";
 import { AABB } from "./aabb";
 import { Hittable } from "./hittable";
+import { objFromJson } from "./hittable-list";
 
 export class BvhNode implements Hittable {
+    static type = '_BvhNode';
+    private objects: Hittable[];
     left: Hittable;
     right: Hittable;
     bbox: AABB;
 
     constructor(objects: Hittable[]) {
+        this.objects = objects;
         this.bbox = objects.reduce((box, object) => {
             box = new AABB(box, object.bounding_box());
             return box;
@@ -58,7 +62,15 @@ export class BvhNode implements Hittable {
 
 
     toJSON() {
-        throw new Error("Method not implemented.");
+        return {
+            type: BvhNode.type,
+            objects: this.objects.map(o => o.toJSON())
+        }
+    }
+
+    static fromJSON(opts: ReturnType<BvhNode['toJSON']>) {
+        assertEqual(opts.type, BvhNode.type);
+        return new BvhNode(opts.objects.map(o => objFromJson(o)))
     }
 
     static box_compare(a: Hittable, b: Hittable, axis_index: number) {

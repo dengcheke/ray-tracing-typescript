@@ -6,6 +6,7 @@ import { Interval } from "../interval";
 import { AABB } from "./aabb";
 import { Quad } from "./quad";
 import { ConstantMedium } from "./constant_medium";
+import { BvhNode } from "./bvh";
 
 export class HittableList implements Hittable {
     static type = '_HittableList';
@@ -62,6 +63,7 @@ export class HittableList implements Hittable {
 
 export function objFromJson(opts: any): Hittable {
     switch (opts.type) {
+        case BvhNode.type: return BvhNode.fromJSON(opts);
         case Sphere.type: return Sphere.fromJSON(opts);
         case Quad.type: return Quad.fromJSON(opts);
         case Translate.type: return Translate.fromJSON(opts);
