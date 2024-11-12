@@ -61,7 +61,13 @@ export function random_unit_direction() {
 
     return new Vector3(x, y, z);
 }
-
+export function random_on_hemisphere(normal: Vector3) {
+    const on_unit_sphere = random_unit_direction();
+    if (on_unit_sphere.dot(normal) > 0.0) // In the same hemisphere as the normal
+        return on_unit_sphere;
+    else
+        return on_unit_sphere.multiplyScalar(-1)
+}
 export function random_in_unit_disk() {
     const r = Math.random();
     const theta = Math.PI * 2 * Math.random();

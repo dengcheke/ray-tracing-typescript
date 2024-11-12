@@ -1,6 +1,6 @@
 import { HitRecord } from "../object/hittable";
 import { Ray } from "../ray";
-import { assertEqual, is_near_zero, random_unit_direction, reflect, reflectance, refract } from "../utils";
+import { assertEqual, is_near_zero, random_on_hemisphere, random_unit_direction, reflect, reflectance, refract } from "../utils";
 import { Color, Vector3 } from "../vec3";
 import { ImageTexture, SolidColorTexture, Texture, textureFromJSON } from "./texture";
 
@@ -39,11 +39,13 @@ export class LambertianMaterial extends Material {
         }
     }
     scattering_pdf(ray_in: Ray, hit_record: HitRecord, scattered: Ray): number {
+        return 0.5 / Math.PI;
         const cos = hit_record.normal.dot(scattered.norm_dir);
         return cos < 0 ? 0 : cos / Math.PI;
     }
     scatter(ray_in: Ray, hit_record: HitRecord) {
-        let scatter_dir = random_unit_direction().add(hit_record.normal);
+        let scatter_dir = random_on_hemisphere(hit_record.normal);
+        //random_unit_direction().add(hit_record.normal);
         if (is_near_zero(scatter_dir)) {
             scatter_dir = hit_record.normal;
         }
