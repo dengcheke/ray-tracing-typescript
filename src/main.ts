@@ -53,7 +53,7 @@ function getScene() {
     const camera = new Camera({
         aspect_ratio: 1,
         image_width: 600,
-        samples_per_pixel: 1000,
+        samples_per_pixel: 10,
         max_depth: 50,
         background: new Color(0, 0, 0),
         vfov: 40,

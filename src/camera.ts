@@ -157,21 +157,28 @@ function rayColor(ray: Ray, depth: number, world: Hittable, camera: Camera): Col
     //用一个新的颜色存储, 避免修改 texture 或者 material 内的color属性值
     const final_color = new Color(0, 0, 0);
 
-    const color_from_emission = hit_record.mat.emitted(
-        hit_record.u,
-        hit_record.v,
-        hit_record.p
-    );
+    const color_from_emission = hit_record.mat.emitted(hit_record.u, hit_record.v, hit_record.p);
     final_color.add(color_from_emission);
 
     const scatter_result = hit_record.mat.scatter(ray, hit_record);
     if (!scatter_result) return final_color;
 
+    const on_light = new Vector3(random(213, 343), 554, random(227, 332));
+    const to_light = on_light.clone().sub(hit_record.p);
+    const distance_squared = to_light.lengthSquared();
+    to_light.normalize();
 
-    const scattering_pdf = hit_record.mat.scattering_pdf(ray, hit_record, scatter_result.ray_scatter);
-    const pdf_value = scattering_pdf;
+    if (to_light.dot(hit_record.normal) < 0) return final_color;
 
-    const color_from_scatter = rayColor(scatter_result.ray_scatter, depth - 1, world, camera)
+    const light_area = (343 - 213) * (332 - 227);
+    const light_cos = Math.abs(to_light.y);
+    if(light_cos < 0.000001) return final_color;
+
+    const pdf_value = distance_squared / (light_cos * light_area);
+    const scattered = new Ray(hit_record.p, to_light, ray.tm);
+    const scattering_pdf = hit_record.mat.scattering_pdf(ray, hit_record, scattered);
+    
+    const color_from_scatter = rayColor(scattered, depth - 1, world, camera)
         .multiply(scatter_result.attenuation)
         .multiplyScalar(scattering_pdf / pdf_value);
 
