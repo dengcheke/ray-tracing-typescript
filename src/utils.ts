@@ -68,6 +68,20 @@ export function random_on_hemisphere(normal: Vector3) {
     else
         return on_unit_sphere.multiplyScalar(-1)
 }
+
+export function random_cosine_direction() {
+    const r1 = random();
+    const r2 = random();
+
+    const t1 = 2 * Math.PI * r1;
+    const t2 = r2 ** 0.5;
+    return new Vector3(
+        Math.cos(t1) * t2,
+        Math.sin(t1) * t2,
+        (1 - r2) ** 0.5
+    );
+}
+
 export function random_in_unit_disk() {
     const r = Math.random();
     const theta = Math.PI * 2 * Math.random();

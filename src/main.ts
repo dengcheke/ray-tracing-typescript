@@ -8,6 +8,7 @@ import { HittableList } from "./object/hittable-list";
 import { create_box, Quad } from "./object/quad";
 import { Color, Vector3 } from "./vec3";
 import CustomWorker from './worker/remote-client?worker';
+import { random_cosine_direction } from "./utils";
 type Client = ReturnType<typeof initWorker> & { _busy?: boolean };
 const workers = [] as Client[];
 const workerNum = Math.max(navigator.hardwareConcurrency / 2, 1);
@@ -16,7 +17,7 @@ for (let i = 0; i < workerNum; i++) {
     workers.push(worker);
 }
 
-function getScene() {   
+function getScene() {
     const world = new HittableList();
 
     const red = new LambertianMaterial(new Color(0.65, 0.05, 0.05));
@@ -166,3 +167,24 @@ function createRenderer() {
         });
     }
 }
+
+
+
+
+function f(d: Vector3) {
+    return d.z ** 3;
+}
+
+function pdf(d: Vector3) {
+    return d.z / Math.PI;
+}
+
+(function main() {
+    const N = 1000000;
+    let sum = 0;
+    for (let i = N; i--;) {
+        const d = random_cosine_direction();
+        sum += f(d) / pdf(d);
+    }
+    console.log(sum / N);
+})()
