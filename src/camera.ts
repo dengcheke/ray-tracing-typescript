@@ -166,12 +166,14 @@ function rayColor(ray: Ray, depth: number, world: Hittable, camera: Camera): Col
 
     const scatter_result = hit_record.mat.scatter(ray, hit_record);
     if (!scatter_result) return final_color;
-    const scatter_pdf = hit_record.mat.scattering_pdf(ray, hit_record, scatter_result.ray_scatter);
-    const pdf_value = scatter_pdf;
+
+
+    const scattering_pdf = hit_record.mat.scattering_pdf(ray, hit_record, scatter_result.ray_scatter);
+    const pdf_value = scattering_pdf;
 
     const color_from_scatter = rayColor(scatter_result.ray_scatter, depth - 1, world, camera)
         .multiply(scatter_result.attenuation)
-        .multiplyScalar(scatter_pdf / pdf_value);
+        .multiplyScalar(scattering_pdf / pdf_value);
 
     final_color.add(color_from_scatter);
 
@@ -215,7 +217,7 @@ export function renderPixel(camera: Camera, scene: Hittable, pixel_x: number, pi
     function sample_square_stratified(s_i: number, s_j: number) {
         // Returns the vector to a random point in the square sub-pixel specified by grid
         // indices s_i and s_j, for an idealized unit square pixel [-.5,-.5] to [+.5,+.5].
-      
+
         const px = ((s_i + random()) * recip_sqrt_spp) - 0.5;
         const py = ((s_j + random()) * recip_sqrt_spp) - 0.5;
 

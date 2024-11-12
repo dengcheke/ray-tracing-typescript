@@ -1,12 +1,15 @@
 import { HitRecord } from "../object/hittable";
+import { ONB } from "../onb";
 import { Ray } from "../ray";
-import { assertEqual, is_near_zero, random_on_hemisphere, random_unit_direction, reflect, reflectance, refract } from "../utils";
+import { assertEqual, is_near_zero, random_cosine_direction, random_on_hemisphere, random_unit_direction, reflect, reflectance, refract } from "../utils";
 import { Color, Vector3 } from "../vec3";
 import { ImageTexture, SolidColorTexture, Texture, textureFromJSON } from "./texture";
 
 export abstract class Material {
     scatter(ray_in: Ray, hit_record: HitRecord): false | {
-        ray_scatter: Ray, attenuation: Color
+        ray_scatter: Ray,
+        attenuation: Color,
+        pdf: number
     } {
         return false;
     }
@@ -44,15 +47,14 @@ export class LambertianMaterial extends Material {
         return cos < 0 ? 0 : cos / Math.PI;
     }
     scatter(ray_in: Ray, hit_record: HitRecord) {
-        let scatter_dir = random_on_hemisphere(hit_record.normal);
-        //random_unit_direction().add(hit_record.normal);
-        if (is_near_zero(scatter_dir)) {
-            scatter_dir = hit_record.normal;
-        }
+        const uvw = new ONB(hit_record.normal);
+        const scatter_dir = uvw.transform(random_cosine_direction());
+        const scattered = new Ray(hit_record.p, scatter_dir.normalize(), ray_in.tm);
         const attenuation = this.tex.value(hit_record.u, hit_record.v, hit_record.p);
         return {
-            ray_scatter: new Ray(hit_record.p, scatter_dir, ray_in.tm),
-            attenuation
+            ray_scatter: scattered,
+            attenuation,
+            pdf: uvw.w.dot(scattered.dir) / Math.PI
         }
     }
     toJSON() {
@@ -159,6 +161,7 @@ export class DiffuseLightMaterial extends Material {
 
 export class IsotropicMaterial extends Material {
     static type = '_IsotropicMaterial';
+    static PDF = 1 / 4 / Math.PI;
     tex: Texture;
     constructor(albedo_or_texture: Texture | Color) {
         super();
@@ -168,14 +171,14 @@ export class IsotropicMaterial extends Material {
             this.tex = albedo_or_texture;
         }
     }
-    scatter(ray_in: Ray, hit_record: HitRecord): false | { ray_scatter: Ray; attenuation: Color; } {
+    scattering_pdf(ray_in: Ray, hit_record: HitRecord, scattered: Ray): number {
+        return IsotropicMaterial.PDF
+    }
+    scatter(ray_in: Ray, hit_record: HitRecord) {
         return {
             ray_scatter: new Ray(hit_record.p, random_unit_direction(), ray_in.tm),
-            attenuation: this.tex.value(
-                hit_record.u,
-                hit_record.v,
-                hit_record.p
-            )
+            attenuation: this.tex.value(hit_record.u,hit_record.v,hit_record.p),
+            pdf: IsotropicMaterial.PDF
         }
     }
     toJSON() {

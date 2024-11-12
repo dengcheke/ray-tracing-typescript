@@ -11,7 +11,7 @@ import CustomWorker from './worker/remote-client?worker';
 import { random_cosine_direction } from "./utils";
 type Client = ReturnType<typeof initWorker> & { _busy?: boolean };
 const workers = [] as Client[];
-const workerNum = Math.max(navigator.hardwareConcurrency / 2, 1);
+const workerNum = Math.max(navigator.hardwareConcurrency - 2, 1);
 for (let i = 0; i < workerNum; i++) {
     const worker = initWorker(new CustomWorker(), i);
     workers.push(worker);
