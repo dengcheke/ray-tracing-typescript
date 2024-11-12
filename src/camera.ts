@@ -155,24 +155,27 @@ function rayColor(ray: Ray, depth: number, world: Hittable, camera: Camera): Col
     if (!hit_record) return camera.background.clone();
 
     //用一个新的颜色存储, 避免修改 texture 或者 material 内的color属性值
-    const blend_color = new Color(0, 0, 0);
+    const final_color = new Color(0, 0, 0);
 
     const color_from_emission = hit_record.mat.emitted(
         hit_record.u,
         hit_record.v,
         hit_record.p
     );
-    blend_color.add(color_from_emission);
+    final_color.add(color_from_emission);
 
     const scatter_result = hit_record.mat.scatter(ray, hit_record);
-    if (!scatter_result) return blend_color;
+    if (!scatter_result) return final_color;
+    const scatter_pdf = hit_record.mat.scattering_pdf(ray, hit_record, scatter_result.ray_scatter);
+    const pdf_value = scatter_pdf;
 
     const color_from_scatter = rayColor(scatter_result.ray_scatter, depth - 1, world, camera)
-        .multiply(scatter_result.attenuation);
+        .multiply(scatter_result.attenuation)
+        .multiplyScalar(scatter_pdf / pdf_value);
 
-    blend_color.add(color_from_scatter);
+    final_color.add(color_from_scatter);
 
-    return blend_color;
+    return final_color;
 }
 
 

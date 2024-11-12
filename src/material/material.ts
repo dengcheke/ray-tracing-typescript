@@ -11,6 +11,9 @@ export abstract class Material {
         return false;
     }
     abstract toJSON(): any;
+    scattering_pdf(ray_in: Ray, hit_record: HitRecord, scattered: Ray) {
+        return 0;
+    }
     emitted(u: number, v: number, p: Vector3) {
         return new Color(0, 0, 0);
     }
@@ -34,6 +37,10 @@ export class LambertianMaterial extends Material {
         } else {
             return Promise.resolve();
         }
+    }
+    scattering_pdf(ray_in: Ray, hit_record: HitRecord, scattered: Ray): number {
+        const cos = hit_record.normal.dot(scattered.norm_dir);
+        return cos < 0 ? 0 : cos / Math.PI;
     }
     scatter(ray_in: Ray, hit_record: HitRecord) {
         let scatter_dir = random_unit_direction().add(hit_record.normal);

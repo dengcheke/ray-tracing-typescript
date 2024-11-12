@@ -16,7 +16,7 @@ for (let i = 0; i < workerNum; i++) {
     workers.push(worker);
 }
 
-function getScene() {
+function getScene() {   
     const world = new HittableList();
 
     const red = new LambertianMaterial(new Color(0.65, 0.05, 0.05));
@@ -52,7 +52,7 @@ function getScene() {
     const camera = new Camera({
         aspect_ratio: 1,
         image_width: 600,
-        samples_per_pixel: 64,
+        samples_per_pixel: 1000,
         max_depth: 50,
         background: new Color(0, 0, 0),
         vfov: 40,
