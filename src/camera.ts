@@ -1,5 +1,6 @@
 import { Interval } from "./interval";
 import { Hittable } from "./object/hittable";
+import { CosinePdf } from "./pdf";
 import { Ray } from "./ray";
 import { assertEqual, deg_to_rad, random, random_in_unit_disk } from "./utils";
 import { Color, Vector3 } from "./vec3";
@@ -165,19 +166,9 @@ function rayColor(ray: Ray, depth: number, world: Hittable, camera: Camera): Col
     const scatter_result = hit_record.mat.scatter(ray, hit_record);
     if (!scatter_result) return final_color;
 
-    const on_light = new Vector3(random(213, 343), 554, random(227, 332));
-    const to_light = on_light.clone().sub(hit_record.p);
-    const distance_squared = to_light.lengthSquared();
-    to_light.normalize();
-
-    if (to_light.dot(hit_record.normal) < 0) return final_color;
-
-    const light_area = (343 - 213) * (332 - 227);
-    const light_cos = Math.abs(to_light.y);
-    if (light_cos < 0.000001) return final_color;
-
-    const pdf_value = distance_squared / (light_cos * light_area);
-    const scattered = new Ray(hit_record.p, to_light, ray.tm);
+    const surface_pdf = new CosinePdf(hit_record.normal);
+    const scattered = new Ray(hit_record.p, surface_pdf.generate(), ray.tm);
+    const pdf_value = surface_pdf.value(scattered.dir);
     const scattering_pdf = hit_record.mat.scattering_pdf(ray, hit_record, scattered);
 
     const color_from_scatter = rayColor(scattered, depth - 1, world, camera)
