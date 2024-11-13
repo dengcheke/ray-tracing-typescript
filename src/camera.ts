@@ -1,6 +1,6 @@
 import { Interval } from "./interval";
 import { Hittable } from "./object/hittable";
-import { CosinePdf } from "./pdf";
+import { CosinePdf, HittablePdf } from "./pdf";
 import { Ray } from "./ray";
 import { assertEqual, deg_to_rad, random, random_in_unit_disk } from "./utils";
 import { Color, Vector3 } from "./vec3";
@@ -149,7 +149,7 @@ export class Camera {
     }
 }
 
-function rayColor(ray: Ray, depth: number, world: Hittable, camera: Camera): Color {
+function rayColor(ray: Ray, depth: number, world: Hittable, camera: Camera, lights: Hittable): Color {
     if (depth <= 0) return new Color(0, 0, 0);
 
     const hit_record = world.hit(ray, new Interval(0.001, Infinity));
@@ -166,12 +166,12 @@ function rayColor(ray: Ray, depth: number, world: Hittable, camera: Camera): Col
     const scatter_result = hit_record.mat.scatter(ray, hit_record);
     if (!scatter_result) return final_color;
 
-    const surface_pdf = new CosinePdf(hit_record.normal);
-    const scattered = new Ray(hit_record.p, surface_pdf.generate(), ray.tm);
-    const pdf_value = surface_pdf.value(scattered.dir);
+    const light_pdf = new HittablePdf(lights, hit_record.p);
+    const scattered = new Ray(hit_record.p, light_pdf.generate(), ray.tm);
+    const pdf_value = light_pdf.value(scattered.dir);
     const scattering_pdf = hit_record.mat.scattering_pdf(ray, hit_record, scattered);
 
-    const color_from_scatter = rayColor(scattered, depth - 1, world, camera)
+    const color_from_scatter = rayColor(scattered, depth - 1, world, camera, lights)
         .multiply(scatter_result.attenuation)
         .multiplyScalar(scattering_pdf / pdf_value);
 
@@ -181,7 +181,7 @@ function rayColor(ray: Ray, depth: number, world: Hittable, camera: Camera): Col
 }
 
 
-export function renderPixel(camera: Camera, scene: Hittable, pixel_x: number, pixel_y: number) {
+export function renderPixel(camera: Camera, scene: Hittable, lights: Hittable, pixel_x: number, pixel_y: number) {
     const { max_depth, defocus_angle,
         pixel00_loc, pixel_delta_u, pixel_delta_v,
         center, sqrt_spp,
@@ -193,7 +193,7 @@ export function renderPixel(camera: Camera, scene: Hittable, pixel_x: number, pi
     for (let s_j = 0; s_j < sqrt_spp; s_j++) {
         for (let s_i = 0; s_i < sqrt_spp; s_i++) {
             const ray = get_ray(pixel_x, pixel_y, s_i, s_j);
-            const sample_color = rayColor(ray, max_depth, scene, camera);
+            const sample_color = rayColor(ray, max_depth, scene, camera, lights);
             total_color.addScaledVector(sample_color, pixel_samples_scale);
         }
     }

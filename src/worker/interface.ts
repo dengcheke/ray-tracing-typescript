@@ -15,7 +15,8 @@ export interface BuildScene_req extends EventBase {
     type: EventKey.构建场景,
     data: {
         world: any,
-        camera: any
+        camera: any,
+        lights: any
     }
 }
 

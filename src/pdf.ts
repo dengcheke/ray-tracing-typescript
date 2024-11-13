@@ -1,3 +1,4 @@
+import { Hittable } from "./object/hittable";
 import { ONB } from "./onb";
 import { random_cosine_direction, random_unit_direction } from "./utils";
 import { Vector3 } from "./vec3";
@@ -32,5 +33,23 @@ export class CosinePdf extends Pdf {
 
     generate(): Vector3 {
         return this.uvw.transform(random_cosine_direction());
+    }
+}
+
+
+export class HittablePdf extends Pdf {
+    private objects: Hittable;
+    private origin: Vector3;
+    constructor(objects: Hittable, origin: Vector3) {
+        super();
+        this.objects = objects;
+        this.origin = origin;
+    }
+
+    value(direction: Vector3): number {
+        return this.objects.pdf_value(this.origin, direction)
+    }
+    generate(): Vector3 {
+        return this.objects.random(this.origin);
     }
 }

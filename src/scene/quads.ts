@@ -1,7 +1,6 @@
 import { Camera } from "../camera";
 import { LambertianMaterial } from "../material/material";
-import { HittableList } from "../object/hittable-list";
-import { Quad } from "../object/quad";
+import { HittableList, Quad } from "../object/hittable";
 import { Color, Vector3 } from "../vec3";
 
 export function scene_quads() {

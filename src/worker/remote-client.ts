@@ -1,14 +1,14 @@
 import { Camera, renderPixel } from "../camera";
 import { LambertianMaterial, Material } from "../material/material";
-import { BvhNode } from "../object/bvh";
-import { HittableList } from "../object/hittable-list";
+import { BvhNode, Hittable, HittableList, objFromJson } from "../object/hittable";
 import { linearToSRGB } from "../utils";
-import { BuildScene_req, BuildScene_res, EventKey, Message, RenderPixels_res } from "./interface";
+import { BuildScene_res, EventKey, Message, RenderPixels_res } from "./interface";
 
 
 let world: HittableList;
 let bvh: BvhNode;
 let camera: Camera;
+let lights: Hittable;
 self.onmessage = e => {
     const data = e.data as Message;
     const taskId = data.taskId;
@@ -17,6 +17,7 @@ self.onmessage = e => {
             world = HittableList.fromJSON(data.data.world);
             bvh = new BvhNode(world.objects);
             camera = Camera.fromJSON(data.data.camera);
+            lights = objFromJson(data.data.lights);
             Promise.all(load_material(world)).then(() => {
                 self.postMessage({
                     taskId,
@@ -42,7 +43,7 @@ self.onmessage = e => {
             for (let index = start; index < end; index++) {
                 const py = Math.floor(index / camera.image_width);
                 const px = index - py * camera.image_width;
-                const color = renderPixel(camera, bvh, px, py);
+                const color = renderPixel(camera, bvh, lights, px, py);
                 const data_index = (index - start) * 4;
                 result[data_index] = Math.floor(linearToSRGB(color.r) * 255);
                 result[data_index + 1] = Math.floor(linearToSRGB(color.g) * 255);

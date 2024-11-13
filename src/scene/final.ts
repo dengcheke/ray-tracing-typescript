@@ -1,12 +1,8 @@
 import { Camera } from "../camera";
 import { DielectricMaterial, DiffuseLightMaterial, LambertianMaterial, MetalMaterial } from "../material/material";
 import { ImageTexture, NoiseTexture } from "../material/texture";
-import { BvhNode } from "../object/bvh";
-import { ConstantMedium } from "../object/constant_medium";
-import { Hittable, Rotate_Y, Translate } from "../object/hittable";
-import { HittableList } from "../object/hittable-list";
-import { create_box, Quad } from "../object/quad";
-import { Sphere } from "../object/sphere";
+import { BvhNode, ConstantMedium, create_box, Hittable, HittableList, Quad, Rotate_Y, Sphere, Translate } from "../object/hittable";
+
 import { random, resolve_image_url } from "../utils";
 import { Color, Vector3 } from "../vec3";
 

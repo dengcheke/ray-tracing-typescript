@@ -22,7 +22,7 @@ export function initWorker(thread: Worker, id: number) {
     }
     return {
         id,
-        buildScene(worldJSON: any, cameraJSON: any) {
+        buildScene(worldJSON: any, cameraJSON: any, lightsJSON: any) {
             const taskId = getTaskId();
             const { resolve, reject, promise } = Promise.withResolvers<void>();
             thread.postMessage({
@@ -30,7 +30,8 @@ export function initWorker(thread: Worker, id: number) {
                 type: EventKey.构建场景,
                 data: {
                     world: worldJSON,
-                    camera: cameraJSON
+                    camera: cameraJSON,
+                    lights: lightsJSON
                 },
             } as BuildScene_req);
             taskMap.set(taskId, { resolve, reject });

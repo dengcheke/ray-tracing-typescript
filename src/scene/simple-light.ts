@@ -1,9 +1,7 @@
 import { Camera } from "../camera";
 import { DiffuseLightMaterial, LambertianMaterial } from "../material/material";
 import { NoiseTexture } from "../material/texture";
-import { HittableList } from "../object/hittable-list";
-import { Quad } from "../object/quad";
-import { Sphere } from "../object/sphere";
+import { HittableList, Quad, Sphere } from "../object/hittable";
 import { Color, Vector3 } from "../vec3";
 
 export function scene_simple_light() {

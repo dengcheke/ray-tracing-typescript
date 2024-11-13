@@ -1,8 +1,7 @@
 import { Camera } from "../camera";
 import { LambertianMaterial } from "../material/material";
 import { NoiseTexture } from "../material/texture";
-import { HittableList } from "../object/hittable-list";
-import { Sphere } from "../object/sphere";
+import { HittableList, Sphere } from "../object/hittable";
 import { Vector3 } from "../vec3";
 
 export function scene_perlin_spheres() {

@@ -1,4 +1,8 @@
 import { Vector3 } from "./vec3";
+export interface Serializable {
+    toJSON(): any;
+}
+
 export function assertEqual(s1: any, s2: any, msg?: string) {
     if (s1 !== s2) throw new Error(msg || 'not equal!');
 }

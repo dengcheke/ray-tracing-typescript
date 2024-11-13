@@ -1,8 +1,7 @@
 import { Camera } from "../camera";
 import { LambertianMaterial } from "../material/material";
-import { HittableList } from "../object/hittable-list";
-import { Sphere } from "../object/sphere";
 import { ImageTexture } from "../material/texture";
+import { HittableList, Sphere } from "../object/hittable";
 import { resolve_image_url } from "../utils";
 import { Vector3 } from "../vec3";
 

@@ -1,9 +1,7 @@
 import { Camera } from "../camera";
 import { DiffuseLightMaterial, LambertianMaterial } from "../material/material";
-import { ConstantMedium } from "../object/constant_medium";
-import { Rotate_Y, Translate } from "../object/hittable";
-import { HittableList } from "../object/hittable-list";
-import { create_box, Quad } from "../object/quad";
+import { ConstantMedium, create_box, HittableList, Quad, Rotate_Y, Translate } from "../object/hittable";
+
 import { Color, Vector3 } from "../vec3";
 
 export function scene_cornell_smoke() {

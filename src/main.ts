@@ -2,13 +2,10 @@ import { ref, watch } from "vue";
 import { initWorker } from "./worker/initial";
 
 import { Camera } from "./camera";
-import { DiffuseLightMaterial, LambertianMaterial } from "./material/material";
-import { Rotate_Y, Translate } from "./object/hittable";
-import { HittableList } from "./object/hittable-list";
-import { create_box, Quad } from "./object/quad";
+import { DiffuseLightMaterial, LambertianMaterial, Material } from "./material/material";
+import { create_box, HittableList, Quad, Rotate_Y, Translate } from "./object/hittable";
 import { Color, Vector3 } from "./vec3";
 import CustomWorker from './worker/remote-client?worker';
-import { random_cosine_direction } from "./utils";
 type Client = ReturnType<typeof initWorker> & { _busy?: boolean };
 const workers = [] as Client[];
 const workerNum = Math.max(navigator.hardwareConcurrency - 2, 1);
@@ -50,10 +47,18 @@ function getScene() {
         new Vector3(130, 0, 65),
     ));
 
+    const empty_material = new Material();
+    const lights = new Quad(
+        new Vector3(343, 554, 332),
+        new Vector3(-130, 0, 0),
+        new Vector3(0, 0, -105),
+        empty_material
+    );
+
     const camera = new Camera({
         aspect_ratio: 1,
         image_width: 600,
-        samples_per_pixel: 1000,
+        samples_per_pixel: 10,
         max_depth: 50,
         background: new Color(0, 0, 0),
         vfov: 40,
@@ -62,10 +67,10 @@ function getScene() {
         vup: new Vector3(0, 1, 0),
         defocus_angle: 0
     });
-    return { camera, world }
+    return { camera, world, lights }
 }
 
-const { world, camera } = getScene();
+const { world, camera, lights } = getScene();
 
 
 const div = document.body.querySelector('#info');
@@ -113,7 +118,8 @@ function createRenderer() {
             if (!buildScenePromise) {
                 const worldJSON = world.toJSON();
                 const cameraJSON = camera.toJSON();
-                buildScenePromise = Promise.all(workers.map(w => w.buildScene(worldJSON, cameraJSON)))
+                const lightsJSON = lights.toJSON();
+                buildScenePromise = Promise.all(workers.map(w => w.buildScene(worldJSON, cameraJSON, lightsJSON)))
             }
             buildScenePromise.then(() => {
                 workers.forEach(w => assignTask(w));
@@ -167,24 +173,3 @@ function createRenderer() {
         });
     }
 }
-
-
-
-
-function f(d: Vector3) {
-    return d.z ** 3;
-}
-
-function pdf(d: Vector3) {
-    return d.z / Math.PI;
-}
-
-(function main() {
-    const N = 1000000;
-    let sum = 0;
-    for (let i = N; i--;) {
-        const d = random_cosine_direction();
-        sum += f(d) / pdf(d);
-    }
-    console.log(sum / N);
-})()

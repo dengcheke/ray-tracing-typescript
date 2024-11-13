@@ -1,11 +1,15 @@
 import { HitRecord } from "../object/hittable";
 import { ONB } from "../onb";
 import { Ray } from "../ray";
-import { assertEqual, is_near_zero, random_cosine_direction, random_on_hemisphere, random_unit_direction, reflect, reflectance, refract } from "../utils";
+import { assertEqual, random_cosine_direction, random_unit_direction, reflect, reflectance, refract, Serializable } from "../utils";
 import { Color, Vector3 } from "../vec3";
 import { ImageTexture, SolidColorTexture, Texture, textureFromJSON } from "./texture";
 
-export abstract class Material {
+export class Material implements Serializable {
+    static type = '_Material'
+    toJSON() {
+        return { type: Material.type }
+    }
     scatter(ray_in: Ray, hit_record: HitRecord): false | {
         ray_scatter: Ray,
         attenuation: Color,
@@ -13,7 +17,6 @@ export abstract class Material {
     } {
         return false;
     }
-    abstract toJSON(): any;
     scattering_pdf(ray_in: Ray, hit_record: HitRecord, scattered: Ray) {
         return 0;
     }
@@ -85,7 +88,8 @@ export class MetalMaterial extends Material {
         if (reflect_dir.dot(hit_record.normal) <= 0) return false;
         return {
             ray_scatter: new Ray(hit_record.p, reflect_dir, ray_in.tm),
-            attenuation: this.albedo
+            attenuation: this.albedo,
+            pdf: null as number,
         }
     }
     toJSON() {
@@ -121,6 +125,7 @@ export class DielectricMaterial extends Material {
         return {
             ray_scatter: new Ray(hit_record.p, refract_dir, ray_in.tm),
             attenuation: DielectricMaterial.Attenuation,
+            pdf: null as number,
         }
     }
     toJSON() {
@@ -204,6 +209,8 @@ export class IsotropicMaterial extends Material {
 
 export function materialFromJSON(opts: any) {
     switch (opts.type) {
+        case Material.type:
+            return new Material();
         case LambertianMaterial.type:
             return LambertianMaterial.fromJSON(opts);
         case MetalMaterial.type:
