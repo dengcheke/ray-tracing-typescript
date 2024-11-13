@@ -1,10 +1,17 @@
 import { Interval } from "../interval";
 import { IsotropicMaterial, Material, materialFromJSON } from "../material/material";
 import { Texture, textureFromJSON } from "../material/texture";
+import { Pdf } from "../pdf";
 import { Ray } from "../ray";
 import { assertEqual, AXIS, deg_to_rad, random } from "../utils";
 import { Color, Vector3 } from "../vec3";
 import { AABB } from "./aabb";
+export class ScatterRecord {
+    attenuation: Color;
+    pdf: Pdf;
+    skip_pdf: boolean;
+    skip_pdf_ray: Ray;
+}
 export class HitRecord {
     p: Vector3; //交点
     normal: Vector3; //法向量

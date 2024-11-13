@@ -1,5 +1,6 @@
-import { HitRecord } from "../object/hittable";
+import { HitRecord, ScatterRecord } from "../object/hittable";
 import { ONB } from "../onb";
+import { CosinePdf, SpherePdf } from "../pdf";
 import { Ray } from "../ray";
 import { assertEqual, random_cosine_direction, random_unit_direction, reflect, reflectance, refract, Serializable } from "../utils";
 import { Color, Vector3 } from "../vec3";
@@ -10,11 +11,7 @@ export class Material implements Serializable {
     toJSON() {
         return { type: Material.type }
     }
-    scatter(ray_in: Ray, hit_record: HitRecord): false | {
-        ray_scatter: Ray,
-        attenuation: Color,
-        pdf: number
-    } {
+    scatter(ray_in: Ray, hit_record: HitRecord): false | ScatterRecord {
         return false;
     }
     scattering_pdf(ray_in: Ray, hit_record: HitRecord, scattered: Ray) {
@@ -51,20 +48,15 @@ export class LambertianMaterial extends Material {
         }
     }
     scattering_pdf(ray_in: Ray, hit_record: HitRecord, scattered: Ray): number {
-        return 0.5 / Math.PI;
         const cos = hit_record.normal.dot(scattered.norm_dir);
         return cos < 0 ? 0 : cos / Math.PI;
     }
     scatter(ray_in: Ray, hit_record: HitRecord) {
-        const uvw = new ONB(hit_record.normal);
-        const scatter_dir = uvw.transform(random_cosine_direction());
-        const scattered = new Ray(hit_record.p, scatter_dir.normalize(), ray_in.tm);
-        const attenuation = this.tex.value(hit_record.u, hit_record.v, hit_record.p);
-        return {
-            ray_scatter: scattered,
-            attenuation,
-            pdf: uvw.w.dot(scattered.dir) / Math.PI
-        }
+        const result = new ScatterRecord();
+        result.attenuation = this.tex.value(hit_record.u, hit_record.v, hit_record.p);
+        result.pdf = new CosinePdf(hit_record.normal);
+        result.skip_pdf = false;
+        return result;
     }
     toJSON() {
         return {
@@ -82,15 +74,15 @@ export class MetalMaterial extends Material {
     static type = '_MetalMaterial'
     constructor(public albedo: Color, public fuzz: number) { super() }
     scatter(ray_in: Ray, hit_record: HitRecord) {
-        const reflect_dir = reflect(ray_in.dir, hit_record.normal);
-        reflect_dir.normalize()
+        const reflect_dir = reflect(ray_in.dir, hit_record.normal)
+            .normalize()
             .addScaledVector(random_unit_direction(), this.fuzz);
-        if (reflect_dir.dot(hit_record.normal) <= 0) return false;
-        return {
-            ray_scatter: new Ray(hit_record.p, reflect_dir, ray_in.tm),
-            attenuation: this.albedo,
-            pdf: null as number,
-        }
+        const result = new ScatterRecord();
+        result.attenuation = this.albedo;
+        result.pdf = null;
+        result.skip_pdf = true;
+        result.skip_pdf_ray = new Ray(hit_record.p, reflect_dir, ray_in.tm);
+        return result;
     }
     toJSON() {
         return {
@@ -113,6 +105,7 @@ export class DielectricMaterial extends Material {
     // the refractive index of the enclosing media
     constructor(public refraction_index: number) { super() }
     scatter(ray_in: Ray, hit_record: HitRecord) {
+
         const ri = hit_record.front_face ? (1 / this.refraction_index) : this.refraction_index;
         const cos_theta = Math.min(-ray_in.norm_dir.dot(hit_record.normal), 1);
         const sin_theta = Math.sqrt(1 - cos_theta * cos_theta);
@@ -122,11 +115,13 @@ export class DielectricMaterial extends Material {
         const refract_dir = cannot_refract || (reflectance(cos_theta, ri) > Math.random())
             ? reflect(ray_in.norm_dir, hit_record.normal)
             : refract(ray_in.norm_dir, hit_record.normal, ri);
-        return {
-            ray_scatter: new Ray(hit_record.p, refract_dir, ray_in.tm),
-            attenuation: DielectricMaterial.Attenuation,
-            pdf: null as number,
-        }
+        const result = new ScatterRecord();
+
+        result.attenuation = DielectricMaterial.Attenuation;
+        result.pdf = null;
+        result.skip_pdf = true;
+        result.skip_pdf_ray = new Ray(hit_record.p, refract_dir, ray_in.tm);
+        return result;
     }
     toJSON() {
         return {
@@ -173,7 +168,7 @@ export class DiffuseLightMaterial extends Material {
 
 export class IsotropicMaterial extends Material {
     static type = '_IsotropicMaterial';
-    static PDF = 1 / 4 / Math.PI;
+    static _pdf = 1 / 4 / Math.PI;
     tex: Texture;
     constructor(albedo_or_texture: Texture | Color) {
         super();
@@ -184,14 +179,14 @@ export class IsotropicMaterial extends Material {
         }
     }
     scattering_pdf(ray_in: Ray, hit_record: HitRecord, scattered: Ray): number {
-        return IsotropicMaterial.PDF
+        return IsotropicMaterial._pdf
     }
     scatter(ray_in: Ray, hit_record: HitRecord) {
-        return {
-            ray_scatter: new Ray(hit_record.p, random_unit_direction(), ray_in.tm),
-            attenuation: this.tex.value(hit_record.u, hit_record.v, hit_record.p),
-            pdf: IsotropicMaterial.PDF
-        }
+        const result = new ScatterRecord();
+        result.attenuation = this.tex.value(hit_record.u, hit_record.v, hit_record.p);
+        result.pdf = new SpherePdf();
+        result.skip_pdf = false;
+        return result;
     }
     toJSON() {
         return {

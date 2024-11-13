@@ -1,6 +1,6 @@
 import { Interval } from "./interval";
 import { Hittable } from "./object/hittable";
-import { CosinePdf, HittablePdf } from "./pdf";
+import { HittablePdf, MixturePdf } from "./pdf";
 import { Ray } from "./ray";
 import { assertEqual, deg_to_rad, random, random_in_unit_disk } from "./utils";
 import { Color, Vector3 } from "./vec3";
@@ -152,27 +152,31 @@ export class Camera {
 function rayColor(ray: Ray, depth: number, world: Hittable, camera: Camera, lights: Hittable): Color {
     if (depth <= 0) return new Color(0, 0, 0);
 
-    const hit_record = world.hit(ray, new Interval(0.001, Infinity));
-    if (!hit_record) return camera.background.clone();
+    const hit_rec = world.hit(ray, new Interval(0.001, Infinity));
+    if (!hit_rec) return camera.background.clone();
 
     //用一个新的颜色存储, 避免修改 texture 或者 material 内的color属性值
     const final_color = new Color(0, 0, 0);
 
-    const color_from_emission = hit_record.mat.emitted(
-        ray, hit_record,
-        hit_record.u, hit_record.v, hit_record.p);
+    const color_from_emission = hit_rec.mat.emitted(ray, hit_rec, hit_rec.u, hit_rec.v, hit_rec.p);
     final_color.add(color_from_emission);
 
-    const scatter_result = hit_record.mat.scatter(ray, hit_record);
-    if (!scatter_result) return final_color;
+    const scatter_rec = hit_rec.mat.scatter(ray, hit_rec);
+    if (!scatter_rec) return final_color;  //color_from_emission
 
-    const light_pdf = new HittablePdf(lights, hit_record.p);
-    const scattered = new Ray(hit_record.p, light_pdf.generate(), ray.tm);
-    const pdf_value = light_pdf.value(scattered.dir);
-    const scattering_pdf = hit_record.mat.scattering_pdf(ray, hit_record, scattered);
+    if (scatter_rec.skip_pdf) {
+        return rayColor(scatter_rec.skip_pdf_ray, depth - 1, world, camera, lights)
+            .multiply(scatter_rec.attenuation);
+    }
+
+    const light_ptr = new HittablePdf(lights, hit_rec.p);
+    const p = new MixturePdf(light_ptr, scatter_rec.pdf);
+    const scattered = new Ray(hit_rec.p, p.generate(), ray.tm);
+    const pdf_value = p.value(scattered.dir);
+    const scattering_pdf = hit_rec.mat.scattering_pdf(ray, hit_rec, scattered);
 
     const color_from_scatter = rayColor(scattered, depth - 1, world, camera, lights)
-        .multiply(scatter_result.attenuation)
+        .multiply(scatter_rec.attenuation)
         .multiplyScalar(scattering_pdf / pdf_value);
 
     final_color.add(color_from_scatter);

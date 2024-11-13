@@ -1,6 +1,6 @@
 import { Hittable } from "./object/hittable";
 import { ONB } from "./onb";
-import { random_cosine_direction, random_unit_direction } from "./utils";
+import { random, random_cosine_direction, random_unit_direction } from "./utils";
 import { Vector3 } from "./vec3";
 
 export abstract class Pdf {
@@ -51,5 +51,23 @@ export class HittablePdf extends Pdf {
     }
     generate(): Vector3 {
         return this.objects.random(this.origin);
+    }
+}
+
+export class MixturePdf extends Pdf {
+    p: Pdf[];
+    constructor(p0: Pdf, p1: Pdf) {
+        super();
+        this.p = [p0, p1];
+    }
+    value(direction: Vector3): number {
+        return 0.5 * this.p[0].value(direction) + 0.5 * this.p[1].value(direction)
+    }
+    generate(): Vector3 {
+        if(random() < 0.5) {
+            return this.p[0].generate()
+        }else{
+            return this.p[1].generate()
+        }
     }
 }
