@@ -17,7 +17,13 @@ export abstract class Material {
     scattering_pdf(ray_in: Ray, hit_record: HitRecord, scattered: Ray) {
         return 0;
     }
-    emitted(u: number, v: number, p: Vector3) {
+    emitted(
+        ray_in: Ray,
+        hit_record: HitRecord,
+        u: number,
+        v: number,
+        p: Vector3
+    ) {
         return new Color(0, 0, 0);
     }
 }
@@ -143,7 +149,8 @@ export class DiffuseLightMaterial extends Material {
         }
     }
 
-    emitted(u: number, v: number, p: Vector3): Color {
+    emitted(ray_in: Ray, hit_record: HitRecord, u: number, v: number, p: Vector3): Color {
+        if (!hit_record.front_face) return new Color(0, 0, 0);
         return this.tex.value(u, v, p);
     }
 
@@ -177,7 +184,7 @@ export class IsotropicMaterial extends Material {
     scatter(ray_in: Ray, hit_record: HitRecord) {
         return {
             ray_scatter: new Ray(hit_record.p, random_unit_direction(), ray_in.tm),
-            attenuation: this.tex.value(hit_record.u,hit_record.v,hit_record.p),
+            attenuation: this.tex.value(hit_record.u, hit_record.v, hit_record.p),
             pdf: IsotropicMaterial.PDF
         }
     }
