@@ -1,14 +1,13 @@
-import { ref, watch } from "vue";
 import { initWorker } from "./worker/initial";
 
 import { Camera } from "./camera";
-import { DielectricMaterial, DiffuseLightMaterial, LambertianMaterial, Material, MetalMaterial } from "./material/material";
+import { DielectricMaterial, DiffuseLightMaterial, LambertianMaterial, Material } from "./material/material";
 import { create_box, HittableList, Quad, Rotate_Y, Sphere, Translate } from "./object/hittable";
 import { Color, Vector3 } from "./vec3";
 import CustomWorker from './worker/remote-client?worker';
 type Client = ReturnType<typeof initWorker> & { _busy?: boolean };
 const workers = [] as Client[];
-const workerNum = Math.max(navigator.hardwareConcurrency - 2, 1);
+const workerNum = Math.max(navigator.hardwareConcurrency / 2, 1);
 for (let i = 0; i < workerNum; i++) {
     const worker = initWorker(new CustomWorker(), i);
     workers.push(worker);
@@ -93,10 +92,7 @@ function createRenderer() {
     canvas.width = image_width;
     canvas.height = image_height;
     const allPixelNums = image_width * image_height;
-    const renderPixelCount = ref(0);
-    watch(() => renderPixelCount.value, v => {
-        div.innerHTML = `${v}/${allPixelNums}`;
-    });
+    let renderPixelCount = 0;
 
     const step_forward = 50;
 
@@ -140,7 +136,7 @@ function createRenderer() {
         const dxdy = [start - row_index * image_width, row_index];
         w.renderPixels([start, end]).then(pixel_data => {
             const imageData = genImage(pixel_data);
-            renderPixelCount.value += end - start;
+            renderPixelCount += end - start;
             requestRender({ dxdy, imageData });
         }).finally(() => {
             w._busy = false;
@@ -161,6 +157,7 @@ function createRenderer() {
         if (rafFlag) return;
         rafFlag = true;
         requestAnimationFrame(() => {
+            div.innerHTML = `${renderPixelCount}/${allPixelNums}`;
             const copys = [...commits];
             commits.length = 0;
             copys.forEach(item => {
