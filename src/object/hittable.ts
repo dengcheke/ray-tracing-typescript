@@ -1,9 +1,10 @@
 import { Interval } from "../interval";
 import { IsotropicMaterial, Material, materialFromJSON } from "../material/material";
 import { Texture, textureFromJSON } from "../material/texture";
+import { ONB } from "../onb";
 import { Pdf } from "../pdf";
 import { Ray } from "../ray";
-import { assertEqual, AXIS, deg_to_rad, random } from "../utils";
+import { assertEqual, AXIS, deg_to_rad, random, random_int } from "../utils";
 import { Color, Vector3 } from "../vec3";
 import { AABB } from "./aabb";
 export class ScatterRecord {
@@ -190,6 +191,17 @@ export class HittableList extends Hittable {
         this.objects = [];
         this.bbox = new AABB();
         this.add(object);
+    }
+    pdf_value(origin: Vector3, direction: Vector3): number {
+        const weight = 1 / this.objects.length;
+        let sum = 0;
+        for (let obj of this.objects) sum += obj.pdf_value(origin, direction);
+        return sum;
+    }
+
+    random(origin: Vector3): Vector3 {
+        const i = random_int(0, this.objects.length - 1);
+        return this.objects[i].random(origin);
     }
 
     bounding_box(): AABB {
@@ -393,6 +405,22 @@ export class Sphere extends Hittable {
         return this.bbox
     }
 
+    pdf_value(origin: Vector3, direction: Vector3): number {
+        const hit = this.hit(new Ray(origin, direction, 0), new Interval(0.0001, Infinity));
+        if (!hit) return 0;
+
+        const distance_squared = this.center.at(0).sub(origin).lengthSquared();
+        const cos_max = (1 - this.radius * this.radius / distance_squared) ** 0.5;
+        const solid_angle = 2 * Math.PI * (1 - cos_max);
+        return 1 / solid_angle;
+    }
+    random(origin: Vector3): Vector3 {
+        const direction = this.center.at(0).sub(origin);
+        const distance_squared = direction.lengthSquared();
+        const uvw = new ONB(direction);
+        return uvw.transform(Sphere.random_to_sphere(this.radius, distance_squared));
+    }
+
     hit(ray: Ray, ray_t: Interval) {
         const current_center = this.center.at(ray.tm);
         const oc = current_center.clone().sub(ray.origin);
@@ -422,6 +450,19 @@ export class Sphere extends Hittable {
         return rec;
     }
 
+    static random_to_sphere(radius: number, distance_squared: number) {
+        const r1 = random();
+        const r2 = random();
+        const cos_max = (1 - radius * radius / distance_squared) ** 0.5;
+        const z = 1 + r2 * (cos_max - 1);
+        const t = 2 * Math.PI * r1;
+        const t1 = (1 - z ** 2) ** 0.5;
+        return new Vector3(
+            Math.cos(t) * t1,
+            Math.sin(t) * t1,
+            z
+        );
+    }
     toJSON() {
         return {
             type: Sphere.type,

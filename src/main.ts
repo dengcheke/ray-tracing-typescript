@@ -2,8 +2,8 @@ import { ref, watch } from "vue";
 import { initWorker } from "./worker/initial";
 
 import { Camera } from "./camera";
-import { DiffuseLightMaterial, LambertianMaterial, Material, MetalMaterial } from "./material/material";
-import { create_box, HittableList, Quad, Rotate_Y, Translate } from "./object/hittable";
+import { DielectricMaterial, DiffuseLightMaterial, LambertianMaterial, Material, MetalMaterial } from "./material/material";
+import { create_box, HittableList, Quad, Rotate_Y, Sphere, Translate } from "./object/hittable";
 import { Color, Vector3 } from "./vec3";
 import CustomWorker from './worker/remote-client?worker';
 type Client = ReturnType<typeof initWorker> & { _busy?: boolean };
@@ -34,26 +34,23 @@ function getScene() {
         world.add(new Quad(Q, u, v, mat));
     });
 
-    const aluminum = new MetalMaterial(new Color(0.8, 0.85, 0.88), 0);
-    const box1 = create_box(new Vector3(0, 0, 0), new Vector3(165, 330, 165), aluminum);
+
+    const box1 = create_box(new Vector3(0, 0, 0), new Vector3(165, 330, 165), white);
     world.add(new Translate(
         new Rotate_Y(box1, 15),
         new Vector3(265, 0, 295),
     ));
 
-    const box2 = create_box(new Vector3(0, 0, 0), new Vector3(165, 165, 165), white);
-    world.add(new Translate(
-        new Rotate_Y(box2, -18),
-        new Vector3(130, 0, 65),
-    ));
+    world.add(new Sphere(new Vector3(190, 90, 190), 90, new DielectricMaterial(1.5)));
 
     const empty_material = new Material();
-    const lights = new Quad(
+    const lights = new HittableList();
+    lights.add(new Quad(
         new Vector3(343, 554, 332),
         new Vector3(-130, 0, 0),
         new Vector3(0, 0, -105),
         empty_material
-    );
+    ));
 
     const camera = new Camera({
         aspect_ratio: 1,

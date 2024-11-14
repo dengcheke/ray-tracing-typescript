@@ -1,6 +1,6 @@
 import { Camera, renderPixel } from "../camera";
 import { LambertianMaterial, Material } from "../material/material";
-import { BvhNode, Hittable, HittableList, objFromJson } from "../object/hittable";
+import { BvhNode, HittableList, objFromJson } from "../object/hittable";
 import { linearToSRGB } from "../utils";
 import { BuildScene_res, EventKey, Message, RenderPixels_res } from "./interface";
 
@@ -8,7 +8,7 @@ import { BuildScene_res, EventKey, Message, RenderPixels_res } from "./interface
 let world: HittableList;
 let bvh: BvhNode;
 let camera: Camera;
-let lights: Hittable;
+let lights: HittableList;
 self.onmessage = e => {
     const data = e.data as Message;
     const taskId = data.taskId;
@@ -17,7 +17,7 @@ self.onmessage = e => {
             world = HittableList.fromJSON(data.data.world);
             bvh = new BvhNode(world.objects);
             camera = Camera.fromJSON(data.data.camera);
-            lights = objFromJson(data.data.lights);
+            lights = HittableList.fromJSON(data.data.lights);
             Promise.all(load_material(world)).then(() => {
                 self.postMessage({
                     taskId,
