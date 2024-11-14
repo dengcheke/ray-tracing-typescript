@@ -45,6 +45,9 @@ self.onmessage = e => {
                 const px = index - py * camera.image_width;
                 const color = renderPixel(camera, bvh, lights, px, py);
                 const data_index = (index - start) * 4;
+                color.r = isNaN(color.r) ? 0 : color.r;
+                color.g = isNaN(color.g) ? 0 : color.g;
+                color.b = isNaN(color.b) ? 0 : color.b;
                 result[data_index] = Math.floor(linearToSRGB(color.r) * 255);
                 result[data_index + 1] = Math.floor(linearToSRGB(color.g) * 255);
                 result[data_index + 2] = Math.floor(linearToSRGB(color.b) * 255);

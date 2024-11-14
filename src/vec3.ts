@@ -131,9 +131,11 @@ export class Color extends Vector3 {
     static Red = new Color(1, 0, 0);
     static Black = new Color(0, 0, 0);
     get r() { return this.x }
+    set r(v:number){ this.x = v} 
     get g() { return this.y }
+    set g(v:number){ this.y = v} 
     get b() { return this.z }
-
+    set b(v:number){ this.z = v} 
     toJSON() {
         return {
             type: Color.type,
